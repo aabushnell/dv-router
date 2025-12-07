@@ -1,20 +1,28 @@
 CXX = g++
 CXXFLAGS = -g -Wall
 
-LINK_TARGET = router
+MKDIR = mkdir -p
+
+LINK_TARGET = bin/router
 
 OBJS = \
-	main.o
+	obj/main.o
 
 REBUILDABLES = $(OBJS) $(LINK_TARGET)
 
 all: $(LINK_TARGET)
 
-$(LINK_TARGET) : $(OBJS)
+$(LINK_TARGET) : $(OBJS) | bin
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-%.o : %.cpp
+obj/%.o : %.cpp | obj
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
+obj:
+	$(MKDIR) $@
+
+bin:
+	$(MKDIR) $@
+
 clean:
-	rm -rf $(REBUILDABLES)
+	rm -rf obj bin $(REBUILDABLES)
