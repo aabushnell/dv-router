@@ -1,7 +1,10 @@
 #ifndef NETWORK_H_INCLUDED
 #define NETWORK_H_INCLUDED
 
+#include <arpa/inet.h>
 #include <cstdint>
+#include <ifaddrs.h>
+#include <net/if.h>
 #include <pthread.h>
 
 #define INFINITY_COST 16
@@ -68,6 +71,8 @@ ip_subnet_t get_subnet_from_str(char *str);
 char *get_str_from_subnet(ip_subnet_t);
 
 bool subnet_cmpr(ip_subnet_t subnet1, ip_subnet_t subnet2);
+
+int netmask_to_prefix(char *netmask_str);
 
 char *get_distance_vector(dv_table_t *table, ip_addr_t sender);
 
