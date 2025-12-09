@@ -13,8 +13,14 @@
     in pkgs.mkShell {
 
       packages = with pkgs; [
+        clang-tools
+        clang
         gcc
       ];
+
+      shellHook = ''
+        export CPLUS_INCLUDE_PATH="${pkgs.llvmPackages.libcxx.dev}/include/c++/v1:$CPLUS_INCLUDE_PATH"
+      '';
     };
   };
 }
