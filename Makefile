@@ -10,7 +10,8 @@ OBJS = \
 	obj/router.o \
 	obj/sender.o \
 	obj/receiver.o \
-	obj/processor.o
+	obj/processor.o \
+	obj/network.o
 
 REBUILDABLES = $(OBJS) $(LINK_TARGET)
 
@@ -33,11 +34,11 @@ clean:
 
 # dependency rules
 
-main.o: router.o router.h
+obj/main.o: obj/router.o router.h
 
 router.cpp: router.h
 
-router.o: sender.o receiver.o processor.o
+obj/router.o: obj/sender.o obj/receiver.o obj/processor.o
 
 sender.cpp: sender.h
 
