@@ -13,16 +13,22 @@ void *router_main(void *arg) {
 
   pthread_mutex_lock(data->cout_mutex);
   std::cout << "Hello I am router " << router_id << std::endl;
-  for (int i = 0; i < router_count; i++) {
-    if (data->adj_matrix[router_id * router_count + i] > 0) {
-      std::cout << "  and I can see router " << i << std::endl;
-    }
-  }
+  // for (int i = 0; i < router_count; i++) {
+  //   if (data->adj_matrix[router_id * router_count + i] > 0) {
+  //     std::cout << "  and I can see router " << i << std::endl;
+  //   }
+  // }
   pthread_mutex_unlock(data->cout_mutex);
+
+
+  
+
 
   pthread_t msg_sender;
   pthread_t msg_receiver;
   pthread_t msg_processor;
+
+
 
   return EXIT_SUCCESS;
 }
