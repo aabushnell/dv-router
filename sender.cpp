@@ -1,6 +1,7 @@
-#include "sender.h"
-#include <router.h>
 #include <sys/socket.h>
+
+#include "sender.h"
+#include "router.h"
 
 void *sender_main(void *arg) {
   sender_data_t *data = (sender_data_t *)arg;
