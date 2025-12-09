@@ -1,8 +1,10 @@
 #include <cstdlib>
 #include <netinet/in.h>
+#include <receiver.h>
 #include <sys/socket.h>
 
 #include "network.h"
+#include "receiver.h"
 #include "router.h"
 #include "sender.h"
 
@@ -24,11 +26,14 @@ void *router_main(void *arg) {
   sender_data_t sender_data = {interfaces, sockets, data->cout_mutex};
 
   pthread_t msg_receiver;
+  receiver_data_t receiver_data = {sockets, data->cout_mutex};
   pthread_t msg_processor;
 
   pthread_create(&msg_sender, NULL, sender_main, (void *)&sender_data);
+  pthread_create(&msg_receiver, NULL, receiver_main, (void *)&receiver_data);
 
   pthread_join(msg_sender, NULL);
+  pthread_join(msg_receiver, NULL);
 
   return EXIT_SUCCESS;
 }
