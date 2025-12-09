@@ -64,6 +64,19 @@ bool subnet_cmpr(ip_subnet_t subnet1, ip_subnet_t subnet2) {
           subnet1.prefix_len == subnet2.prefix_len);
 }
 
+int netmask_to_prefix(char *netmask_str) {
+  struct in_addr addr;
+  inet_pton(AF_INET, netmask_str, &addr);
+  uint32_t mask = ntohl(addr.s_addr);
+
+  int prefix = 0;
+  while (mask & 0x80000000) {
+    prefix++;
+    mask <<= 1;
+  }
+  return prefix;
+}
+
 char *get_distance_vector(dv_table_t *table, ip_addr_t sender) {
   size_t buffer_len = 128;
   size_t current_len = 0;
