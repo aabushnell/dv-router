@@ -1,9 +1,10 @@
-#include "router.h"
-#include "sender.h"
 #include <cstdlib>
 #include <netinet/in.h>
-#include <network.h>
 #include <sys/socket.h>
+
+#include "router.h"
+#include "network.h"
+#include "sender.h"
 
 pthread_mutex_t cout_mutex;
 
