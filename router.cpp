@@ -1,6 +1,5 @@
 #include <cstdlib>
 #include <netinet/in.h>
-#include <receiver.h>
 #include <sys/socket.h>
 
 #include "network.h"
