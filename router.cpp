@@ -2,8 +2,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include "router.h"
 #include "network.h"
+#include "router.h"
 #include "sender.h"
 
 pthread_mutex_t cout_mutex;
@@ -27,6 +27,8 @@ void *router_main(void *arg) {
   pthread_t msg_processor;
 
   pthread_create(&msg_sender, NULL, sender_main, (void *)&sender_data);
+
+  pthread_join(msg_sender, NULL);
 
   return EXIT_SUCCESS;
 }
