@@ -1,12 +1,25 @@
 #ifndef ROUTER_H_INCLUDED
 #define ROUTER_H_INCLUDED
 
+#include <arpa/inet.h>
+#include <ifaddrs.h>
 #include <iostream>
+#include <net/if.h>
+#include <netinet/in.h>
 #include <pthread.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "network.h"
 
+#ifndef SO_BINDTODEVICE
+#define SO_BINDTODEVICE 25
+#endif
+
 #define MSG_QUEUE_LEN 10
+
+#define PROTOCOL_PORT 5555
 
 typedef struct router_msg_t {
   router_msg_t *next;
@@ -20,10 +33,7 @@ typedef struct router_msg_box_t {
 } router_msg_box_t;
 
 typedef struct router_data_t {
-  router_msg_box_t **msg_boxes;
-  char *adj_matrix;
   pthread_mutex_t *cout_mutex;
-  int router_count;
   int router_id;
 } router_data_t;
 
@@ -38,8 +48,23 @@ typedef struct msg_queue_t {
   size_t queue_len;
 } msg_queue_t;
 
+typedef struct interface_info_t {
+  std::string name;
+  ip_addr_t addr;
+  ip_addr_t broadcast_addr;
+  ip_subnet_t subnet;
+} interface_info_t;
+
+typedef struct router_socket_t {
+  std::string name;
+  int fd;
+} router_socket_t;
+
 void *router_main(void *arg);
 
-void broadcast(std::string message, char *adj_matrix);
+std::vector<interface_info_t> get_interfaces();
+
+std::vector<router_socket_t>
+bind_sockets(std::vector<interface_info_t> &interfaces);
 
 #endif
