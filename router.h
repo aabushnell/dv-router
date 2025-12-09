@@ -62,9 +62,10 @@ typedef struct router_socket_t {
 
 void *router_main(void *arg);
 
-std::vector<interface_info_t> get_interfaces();
+std::vector<interface_info_t> get_interfaces(pthread_mutex_t *cout_mutex);
 
 std::vector<router_socket_t>
-bind_sockets(std::vector<interface_info_t> &interfaces);
+bind_sockets(std::vector<interface_info_t> &interfaces,
+             pthread_mutex_t *cout_mutex);
 
 #endif
