@@ -1,4 +1,5 @@
 #include "router.h"
+#include "sender.h"
 #include <cstdlib>
 #include <netinet/in.h>
 #include <network.h>
@@ -15,22 +16,28 @@ void *router_main(void *arg) {
   std::cout << "Hello I am router " << router_id << std::endl;
   pthread_mutex_unlock(data->cout_mutex);
 
-  auto interfaces = get_interfaces();
-  auto sockets = bind_sockets(interfaces);
+  auto interfaces = get_interfaces(data->cout_mutex);
+  auto sockets = bind_sockets(interfaces, data->cout_mutex);
 
   pthread_t msg_sender;
+  sender_data_t sender_data = {interfaces, sockets, data->cout_mutex};
+
   pthread_t msg_receiver;
   pthread_t msg_processor;
+
+  pthread_create(&msg_sender, NULL, sender_main, (void *)&sender_data);
 
   return EXIT_SUCCESS;
 }
 
-std::vector<interface_info_t> get_interfaces() {
+std::vector<interface_info_t> get_interfaces(pthread_mutex_t *cout_mutex) {
   std::vector<interface_info_t> interfaces;
   struct ifaddrs *ifaddr, *ifa;
 
   if (getifaddrs(&ifaddr) == -1) {
+    pthread_mutex_lock(cout_mutex);
     std::cout << "ERROR: getifaddrs failed" << std::endl;
+    pthread_mutex_unlock(cout_mutex);
     exit(EXIT_FAILURE);
   }
 
@@ -82,7 +89,9 @@ std::vector<interface_info_t> get_interfaces() {
       }
 
       interfaces.push_back(info);
+      pthread_mutex_lock(cout_mutex);
       std::cout << "Found interface: " << info.name << std::endl;
+      pthread_mutex_unlock(cout_mutex);
     }
   }
 
@@ -91,13 +100,16 @@ std::vector<interface_info_t> get_interfaces() {
 }
 
 std::vector<router_socket_t>
-bind_sockets(std::vector<interface_info_t> &interfaces) {
+bind_sockets(std::vector<interface_info_t> &interfaces,
+             pthread_mutex_t *cout_mutex) {
   std::vector<router_socket_t> sockets;
 
   for (auto &iface : interfaces) {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
+      pthread_mutex_lock(cout_mutex);
       std::cout << "ERROR: socket not bound" << std::endl;
+      pthread_mutex_unlock(cout_mutex);
       continue;
     }
 
@@ -107,7 +119,9 @@ bind_sockets(std::vector<interface_info_t> &interfaces) {
 
     if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, iface.name.c_str(),
                    iface.name.length()) < 0) {
+      pthread_mutex_lock(cout_mutex);
       std::cout << "ERROR: cannot bind to device" << std::endl;
+      pthread_mutex_unlock(cout_mutex);
     }
 
     int enable_broadcast = 1;
@@ -122,13 +136,17 @@ bind_sockets(std::vector<interface_info_t> &interfaces) {
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (::bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+      pthread_mutex_lock(cout_mutex);
       std::cout << "ERROR: could not bind socket" << std::endl;
+      pthread_mutex_unlock(cout_mutex);
       close(sock);
       continue;
     }
 
     sockets.push_back((router_socket_t){iface.name, sock});
+    pthread_mutex_lock(cout_mutex);
     std::cout << "Bound socket " << sock << " to " << iface.name << std::endl;
+    pthread_mutex_unlock(cout_mutex);
   }
 
   return sockets;
