@@ -8,6 +8,7 @@
 typedef struct receiver_data_t {
   std::vector<ip_addr_t> &local_ips;
   std::vector<router_socket_t> &sockets;
+  msg_queue_t *msg_queue;
   pthread_mutex_t *cout_mutex;
 } receiver_data_t;
 

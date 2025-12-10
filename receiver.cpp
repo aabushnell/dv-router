@@ -1,5 +1,6 @@
 #include "receiver.h"
 #include <netinet/in.h>
+#include <router.h>
 #include <sys/socket.h>
 
 void *receiver_main(void *arg) {
@@ -51,6 +52,30 @@ void *receiver_main(void *arg) {
             if (is_local) {
               continue;
             }
+
+            msg_queue_entry_t *new_node =
+                (msg_queue_entry_t *)malloc(sizeof(*new_node));
+            if (!new_node) {
+              continue;
+            }
+
+            new_node->msg_str = (char *)malloc(n + 1);
+            memcpy(new_node->msg_str, buffer, n);
+            new_node->msg_str[n] = '\0';
+            new_node->next = NULL;
+
+            pthread_mutex_lock(data->msg_queue->queue_mutex);
+
+            if (data->msg_queue->head == NULL) {
+              data->msg_queue->head = new_node;
+            } else {
+              data->msg_queue->tail->next = new_node;
+            }
+            data->msg_queue->tail = new_node;
+            data->msg_queue->queue_len++;
+
+            pthread_mutex_unlock(data->msg_queue->queue_mutex);
+            pthread_cond_signal(data->msg_queue->queue_cond);
 
             pthread_mutex_lock(data->cout_mutex);
             std::cout << "Received update from " << sender << " on " << s.name
