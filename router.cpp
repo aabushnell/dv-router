@@ -51,7 +51,7 @@ void *router_main(void *arg) {
     connected_net.addr = iface.addr;
     connected_net.addr.f4 = 0;
     connected_net.prefix_len = iface.subnet.prefix_len;
-    add_direct_route(routing_table, connected_net, 1);
+    add_direct_route(routing_table, connected_net, 1, data->cout_mutex);
     routing_table->update_dv = true;
   }
   pthread_mutex_unlock(&routing_table_mutex);
