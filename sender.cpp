@@ -8,6 +8,7 @@
 void *sender_main(void *arg) {
   sender_data_t *data = (sender_data_t *)arg;
   uint16_t sn = 0;
+  uint16_t dv_counter = 0;
   while (true) {
     // Check for liveness
     time_t current_time = time(NULL);
@@ -61,14 +62,8 @@ void *sender_main(void *arg) {
 
     // Send DV Updates
     char *dv_msg;
-    pthread_mutex_lock(data->cout_mutex);
-    std::cout << "Sender acquiring table lock" << std::endl;
-    pthread_mutex_unlock(data->cout_mutex);
     pthread_mutex_lock(data->routing_table->table_mutex);
-    pthread_mutex_lock(data->cout_mutex);
-    std::cout << "Sender acquired table lock" << std::endl;
-    pthread_mutex_unlock(data->cout_mutex);
-    if (data->routing_table->update_dv) {
+    if (data->routing_table->update_dv || dv_counter > 4) {
       for (size_t i = 0; i < data->sockets.size(); i++) {
         struct sockaddr_in dest_addr;
         memset(&dest_addr, 0, sizeof(dest_addr));
@@ -92,10 +87,12 @@ void *sender_main(void *arg) {
         pthread_mutex_unlock(data->cout_mutex);
       }
       dv_sent(data->routing_table);
+      dv_counter = 0;
     }
     pthread_mutex_unlock(data->routing_table->table_mutex);
 
     sn++;
+    dv_counter++;
     std::this_thread::sleep_for(std::chrono::seconds(5));
   }
 }
