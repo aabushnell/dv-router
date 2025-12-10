@@ -88,7 +88,7 @@ char *get_distance_vector(dv_table_t *table, ip_addr_t sender) {
   current_len += header_len;
   free(sender_ip_str);
 
-  pthread_mutex_lock(table->mutex);
+  pthread_mutex_lock(table->table_mutex);
   dv_dest_entry_t *current_entry = table->head;
   // walk dv entry linked list
   while (current_entry != NULL) {
@@ -111,7 +111,7 @@ char *get_distance_vector(dv_table_t *table, ip_addr_t sender) {
 
     current_entry = current_entry->next;
   }
-  pthread_mutex_unlock(table->mutex);
+  pthread_mutex_unlock(table->table_mutex);
 
   return buffer;
 }

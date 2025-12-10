@@ -44,7 +44,7 @@ typedef struct dv_dest_entry_t {
 // wrapper struct for head of ll
 typedef struct dv_table_t {
   dv_dest_entry_t *head;
-  pthread_mutex_t *mutex;
+  pthread_mutex_t *table_mutex;
   bool update_dv;
 } dv_table_t;
 
