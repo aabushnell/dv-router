@@ -169,7 +169,7 @@ dv_parsed_msg_t *parse_distance_vector(char *dv_str) {
 
     cursor = close_paren + 2;
   }
-  return NULL;
+  return msg_ll;
 }
 
 void free_parsed_msg(dv_parsed_msg_t *msg) {

@@ -225,13 +225,12 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
 
   dv_parsed_entry_t *current_route = msg->head;
 
-  pthread_mutex_lock(cout_mutex);
-  char *crd = get_str_from_subnet(current_route->dest);
-  std::cout << "~~ Parsing route " << crd << std::endl;
-  free(crd);
-  pthread_mutex_unlock(cout_mutex);
-
   while (current_route != NULL) {
+    pthread_mutex_lock(cout_mutex);
+    char *crd = get_str_from_subnet(current_route->dest);
+    std::cout << "~~ Parsing route " << crd << std::endl;
+    free(crd);
+    pthread_mutex_unlock(cout_mutex);
 
     dv_dest_entry_t *current_entry = table->head;
     dv_dest_entry_t *dest = NULL;
