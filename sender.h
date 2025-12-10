@@ -1,10 +1,11 @@
 #ifndef SENDER_H_INCLUDED
 #define SENDER_H_INCLUDED
 
-#include "router.h"
-#include <network.h>
 #include <thread>
 #include <vector>
+
+#include "router.h"
+#include "network.h"
 
 typedef struct sender_data_t {
   std::vector<interface_info_t> &interfaces;
