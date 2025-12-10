@@ -242,7 +242,7 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table) {
       dest->dest = current_route->dest;
       dest->head = NULL;
       dest->best = NULL;
-      dest->best_cost = 16;
+      dest->best_cost = INFINITY_COST;
       dest->next = table->head;
       table->head = dest;
     }
@@ -256,6 +256,7 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table) {
         neighbor = current_neighbor;
         break;
       }
+      current_neighbor = current_neighbor->next;
     }
 
     // create new entry for neighbor if needed
@@ -300,6 +301,7 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table) {
       dest->best_cost = min_cost;
       dv_updated = true;
     }
+    current_route = current_route->next;
   }
   if (dv_updated) {
     dv_update(table);
