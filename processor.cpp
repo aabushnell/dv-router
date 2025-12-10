@@ -6,27 +6,27 @@ void *processor_main(void *arg) {
   processor_data_t *data = (processor_data_t *)arg;
 
   while (true) {
-    char *msg_str = NULL;
     pthread_mutex_lock(data->msg_queue->queue_mutex);
     while (data->msg_queue->queue_len == 0) {
       pthread_cond_wait(data->msg_queue->queue_cond,
                         data->msg_queue->queue_mutex);
     }
 
-    msg_str = get_msg_queue_head(data->msg_queue);
+    msg_queue_entry_t *msg_entry = get_msg_queue_head(data->msg_queue);
     pthread_mutex_unlock(data->msg_queue->queue_mutex);
 
-    if (msg_str == NULL) {
+    if (msg_entry == NULL) {
       continue;
     }
 
-    msg_type_t type = get_msg_type(msg_str);
+    msg_type_t type = get_msg_type(msg_entry->msg_str);
 
     if (type == MSG_HELLO) {
       pthread_mutex_lock(data->cout_mutex);
       std::cout << "Processing msg of type MSG_HELLO" << std::endl;
       pthread_mutex_unlock(data->cout_mutex);
-      // process_hello();
+      process_hello(msg_entry->msg_str, msg_entry->int_name, data->hello_table,
+                    data->cout_mutex);
       continue;
     }
 
@@ -34,12 +34,15 @@ void *processor_main(void *arg) {
       pthread_mutex_lock(data->cout_mutex);
       std::cout << "Processing msg of type MSG_DV" << std::endl;
       pthread_mutex_unlock(data->cout_mutex);
-      dv_parsed_msg_t *msg = parse_distance_vector(msg_str);
+      dv_parsed_msg_t *msg = parse_distance_vector(msg_entry->msg_str);
       if (msg) {
         process_distance_vector(msg, data->table);
       }
       continue;
     }
+
+    free(msg_entry->msg_str);
+    free(msg_entry);
 
     pthread_mutex_lock(data->cout_mutex);
     std::cout << "Processing msg of type MSG_UNKNOWN" << std::endl;
@@ -47,18 +50,73 @@ void *processor_main(void *arg) {
   }
 }
 
-char *get_msg_queue_head(msg_queue_t *queue) {
+msg_queue_entry_t *get_msg_queue_head(msg_queue_t *queue) {
   msg_queue_entry_t *head = queue->head;
   if (head->next != NULL) {
     queue->head = head->next;
     queue->queue_len--;
   } else {
     queue->head = NULL;
+    queue->tail = NULL;
     queue->queue_len = 0;
   }
-  char *msg_str = head->msg_str;
-  free(head);
-  return msg_str;
+  return head;
+}
+
+void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
+                   pthread_mutex_t *cout_mutex) {
+  char *first_colon = strchr(msg, ':');
+  if (!first_colon) {
+    return;
+  }
+
+  *first_colon = '\0';
+  ip_addr_t sender_ip = get_addr_from_str(msg);
+  *first_colon = ':';
+
+  char *hello_ptr = strstr(msg, "HELLO");
+  if (!hello_ptr) {
+    return;
+  }
+
+  uint16_t sn_net;
+  memcpy(&sn_net, hello_ptr + 7, sizeof(sn_net));
+  uint16_t sn = ntohs(sn_net);
+
+  pthread_mutex_lock(hello_table->table_mutex);
+
+  hello_entry_t *current_entry = hello_table->head;
+
+  bool match_found = false;
+  while (current_entry != NULL) {
+    if (addr_cmpr(current_entry->ip, sender_ip)) {
+      match_found = true;
+      current_entry->last_sn = sn;
+      current_entry->last_seen = time(NULL);
+      current_entry->alive = true;
+      break;
+    }
+    current_entry = current_entry->next;
+  }
+
+  if (!match_found) {
+    hello_entry_t *new_entry = (hello_entry_t *)malloc(sizeof(*new_entry));
+    new_entry->ip = sender_ip;
+    new_entry->last_sn = sn;
+    new_entry->last_seen = time(NULL);
+    new_entry->alive = true;
+    strcpy(new_entry->int_name, int_name);
+
+    new_entry->next = hello_table->head;
+    hello_table->head = new_entry;
+
+    pthread_mutex_lock(cout_mutex);
+    char *sender_ip_str = get_str_from_addr(sender_ip);
+    std::cout << "New Neighbor Found @ " << sender_ip_str << "!" << std::endl;
+    pthread_mutex_unlock(cout_mutex);
+  }
+
+  pthread_mutex_unlock(hello_table->table_mutex);
 }
 
 void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table) {
