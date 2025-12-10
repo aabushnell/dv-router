@@ -25,10 +25,10 @@ void *sender_main(void *arg) {
 
     if (dying) {
       data->hello_table->neighbor_dead = true;
+      pthread_mutex_lock(data->cout_mutex);
+      std::cout << "Link is dead" << std::endl;
+      pthread_mutex_unlock(data->cout_mutex);
     }
-    pthread_mutex_lock(data->cout_mutex);
-    std::cout << "Link is dead" << std::endl;
-    pthread_mutex_unlock(data->cout_mutex);
     pthread_mutex_unlock(data->hello_table->table_mutex);
 
     // Send HELLOs
