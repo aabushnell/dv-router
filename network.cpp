@@ -195,6 +195,21 @@ void free_parsed_msg(dv_parsed_msg_t *msg) {
   free(msg);
 }
 
+msg_type_t get_msg_type(char *msg) {
+  char *first_colon = strchr(msg, ':');
+  if (!first_colon) {
+    return MSG_UNKOWN;
+  }
+
+  if (strncmp(first_colon + 1, "HELLO", 5) == 0) {
+    return MSG_HELLO;
+  }
+  if (strncmp(first_colon + 1, "DV", 2) == 0) {
+    return MSG_DV;
+  }
+  return MSG_UNKOWN;
+}
+
 void dv_update(dv_table_t *table) { table->update_dv = true; }
 
 void dv_sent(dv_table_t *table) { table->update_dv = false; }

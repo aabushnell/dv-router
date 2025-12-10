@@ -60,6 +60,8 @@ typedef struct dv_parsed_msg_t {
   dv_parsed_entry_t *head;
 } dv_parsed_msg_t;
 
+typedef enum { MSG_UNKOWN, MSG_HELLO, MSG_DV } msg_type_t;
+
 ip_addr_t get_addr_from_str(char *str);
 
 char *get_str_from_addr(ip_addr_t addr);
@@ -79,6 +81,8 @@ char *get_distance_vector(dv_table_t *table, ip_addr_t sender);
 dv_parsed_msg_t *parse_distance_vector(char *dv_str);
 
 void free_parsed_msg(dv_parsed_msg_t *msg);
+
+msg_type_t get_msg_type(char *msg);
 
 void dv_update(dv_table_t *table);
 
