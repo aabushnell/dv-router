@@ -3,6 +3,8 @@
 
 #include "router.h"
 
+#define REC_BUFF_SIZE 4096
+
 typedef struct receiver_data_t {
   std::vector<ip_addr_t> &local_ips;
   std::vector<router_socket_t> &sockets;

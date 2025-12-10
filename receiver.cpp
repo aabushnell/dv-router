@@ -7,7 +7,7 @@ void *receiver_main(void *arg) {
   fd_set readfds;
   int max_fd = 0;
 
-  char *buffer = (char *)malloc(4096);
+  char *buffer = (char *)malloc(REC_BUFF_SIZE);
   if (!buffer) {
     return NULL;
   }
@@ -29,7 +29,7 @@ void *receiver_main(void *arg) {
     if (pending_sockets > 0) {
       for (auto &s : data->sockets) {
         if (FD_ISSET(s.fd, &readfds)) {
-          int n = recvfrom(s.fd, buffer, sizeof(buffer) - 1, 0,
+          int n = recvfrom(s.fd, buffer, REC_BUFF_SIZE - 1, 0,
                            (struct sockaddr *)&sender_addr, &addr_len);
           if (n > 0) {
             buffer[n] = '\0';
@@ -62,4 +62,6 @@ void *receiver_main(void *arg) {
       }
     }
   }
+
+  free(buffer);
 }
