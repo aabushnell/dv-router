@@ -44,7 +44,8 @@ void *processor_main(void *arg) {
 
     if (type == MSG_DV) {
       pthread_mutex_lock(data->cout_mutex);
-      std::cout << "Processing msg of type MSG_DV" << std::endl;
+      std::cout << "Processing msg of type MSG_DV: " << msg_entry->msg_str
+                << std::endl;
       pthread_mutex_unlock(data->cout_mutex);
       dv_parsed_msg_t *msg = parse_distance_vector(msg_entry->msg_str);
       if (msg) {
