@@ -208,7 +208,8 @@ msg_type_t get_msg_type(char *msg) {
   return MSG_UNKOWN;
 }
 
-void add_direct_route(dv_table_t *table, ip_subnet_t subnet, uint32_t cost) {
+void add_direct_route(dv_table_t *table, ip_subnet_t subnet, uint32_t cost,
+                      pthread_mutex_t *cout_mutex) {
   dv_dest_entry_t *current_dest = table->head;
   while (current_dest != NULL) {
     if (subnet_cmpr(current_dest->dest, subnet))
@@ -226,6 +227,11 @@ void add_direct_route(dv_table_t *table, ip_subnet_t subnet, uint32_t cost) {
     // Insert at head
     current_dest->next = table->head;
     table->head = current_dest;
+
+    pthread_mutex_lock(cout_mutex);
+    char *subnet_str = get_str_from_subnet(subnet);
+    std::cout << "Adding new dest: " << subnet_str << std::endl;
+    pthread_mutex_unlock(cout_mutex);
   }
 
   ip_addr_t direct_gateway = (ip_addr_t){0, 0, 0, 0};

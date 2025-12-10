@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <cstdint>
 #include <ifaddrs.h>
+#include <iostream>
 #include <net/if.h>
 #include <pthread.h>
 
@@ -84,7 +85,8 @@ void free_parsed_msg(dv_parsed_msg_t *msg);
 
 msg_type_t get_msg_type(char *msg);
 
-void add_direct_route(dv_table_t *table, ip_subnet_t subnet, uint32_t cost);
+void add_direct_route(dv_table_t *table, ip_subnet_t subnet, uint32_t cost,
+                      pthread_mutex_t *cout_mutex);
 
 void dv_update(dv_table_t *table);
 
