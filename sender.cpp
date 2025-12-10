@@ -61,7 +61,13 @@ void *sender_main(void *arg) {
 
     // Send DV Updates
     char *dv_msg;
+    pthread_mutex_lock(data->cout_mutex);
+    std::cout << "Sender acquiring table lock" << std::endl;
+    pthread_mutex_unlock(data->cout_mutex);
     pthread_mutex_lock(data->routing_table->table_mutex);
+    pthread_mutex_lock(data->cout_mutex);
+    std::cout << "Sender acquired table lock" << std::endl;
+    pthread_mutex_unlock(data->cout_mutex);
     if (data->routing_table->update_dv) {
       for (size_t i = 0; i < data->sockets.size(); i++) {
         struct sockaddr_in dest_addr;
