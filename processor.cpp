@@ -1,6 +1,7 @@
 #include "processor.h"
 #include "network.h"
 #include "router.h"
+#include <pthread.h>
 
 void *processor_main(void *arg) {
   processor_data_t *data = (processor_data_t *)arg;
@@ -47,7 +48,7 @@ void *processor_main(void *arg) {
       pthread_mutex_unlock(data->cout_mutex);
       dv_parsed_msg_t *msg = parse_distance_vector(msg_entry->msg_str);
       if (msg) {
-        process_distance_vector(msg, data->table);
+        process_distance_vector(msg, data->table, data->cout_mutex);
       }
       print_routing_table(data->table, data->cout_mutex);
       continue;
@@ -216,12 +217,19 @@ void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
   pthread_mutex_unlock(hello_table->table_mutex);
 }
 
-void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table) {
+void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
+                             pthread_mutex_t *cout_mutex) {
   bool dv_updated = false;
 
   pthread_mutex_lock(table->table_mutex);
 
   dv_parsed_entry_t *current_route = msg->head;
+
+  pthread_mutex_lock(cout_mutex);
+  char *crd = get_str_from_subnet(current_route->dest);
+  std::cout << "~~ Parsing route " << crd << std::endl;
+  free(crd);
+  pthread_mutex_unlock(cout_mutex);
 
   while (current_route != NULL) {
 

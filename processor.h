@@ -19,7 +19,8 @@ void process_topology_change(hello_table_t *hello_table,
 void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
                    pthread_mutex_t *cout_mutex);
 
-void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table);
+void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
+                             pthread_mutex_t *cout_mutex);
 
 void *processor_main(void *arg);
 
