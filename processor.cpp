@@ -50,6 +50,10 @@ void *processor_main(void *arg) {
       dv_parsed_msg_t *msg = parse_distance_vector(msg_entry->msg_str);
       if (msg) {
         process_distance_vector(msg, data->table, data->cout_mutex);
+      } else {
+        pthread_mutex_lock(data->cout_mutex);
+        std::cout << "ERROR: Could not parse message" << std::endl;
+        pthread_mutex_unlock(data->cout_mutex);
       }
       print_routing_table(data->table, data->cout_mutex);
       continue;
