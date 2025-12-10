@@ -46,7 +46,9 @@ typedef struct msg_queue_entry_t {
 
 typedef struct msg_queue_t {
   msg_queue_entry_t *head;
+  msg_queue_entry_t *tail;
   pthread_mutex_t *queue_mutex;
+  pthread_cond_t *queue_cond;
   size_t queue_len;
 } msg_queue_t;
 
@@ -61,6 +63,21 @@ typedef struct router_socket_t {
   std::string name;
   int fd;
 } router_socket_t;
+
+typedef struct hello_entry_t {
+  hello_entry_t *next;
+
+  ip_addr_t ip;
+  uint16_t last_sn;
+  time_t last_seen;
+  bool alive;
+  char int_name[16];
+} hello_entry_t;
+
+typedef struct hello_table_t {
+  hello_entry_t *head;
+  pthread_mutex_t *table_mutex;
+} hello_table_t;
 
 void *router_main(void *arg);
 

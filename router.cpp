@@ -1,13 +1,13 @@
 #include <cstdlib>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <sys/socket.h>
 
 #include "network.h"
+#include "processor.h"
 #include "receiver.h"
 #include "router.h"
 #include "sender.h"
-
-pthread_mutex_t cout_mutex;
 
 void *router_main(void *arg) {
   router_data_t *data = (router_data_t *)arg;
@@ -22,18 +22,42 @@ void *router_main(void *arg) {
   auto local_ips = get_local_ips(interfaces);
   auto sockets = bind_sockets(interfaces, data->cout_mutex);
 
+  pthread_mutex_t routing_table_mutex = PTHREAD_MUTEX_INITIALIZER;
+  dv_table_t *routing_table = (dv_table_t *)malloc(sizeof(*routing_table));
+  routing_table->head = NULL;
+  routing_table->table_mutex = &routing_table_mutex;
+  routing_table->update_dv = false;
+
   pthread_t msg_sender;
   sender_data_t sender_data = {interfaces, sockets, data->cout_mutex};
 
   pthread_t msg_receiver;
-  receiver_data_t receiver_data = {local_ips, sockets, data->cout_mutex};
+  pthread_mutex_t msg_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t msg_queue_cond = PTHREAD_COND_INITIALIZER;
+  msg_queue_t *msg_queue = (msg_queue_t *)malloc(sizeof(*msg_queue));
+  msg_queue->head = NULL;
+  msg_queue->tail = NULL;
+  msg_queue->queue_mutex = &msg_queue_mutex;
+  msg_queue->queue_cond = &msg_queue_cond;
+  msg_queue->queue_len = 0;
+  receiver_data_t receiver_data = {local_ips, sockets, msg_queue,
+                                   data->cout_mutex};
+
   pthread_t msg_processor;
+  pthread_mutex_t hello_table_mutex = PTHREAD_MUTEX_INITIALIZER;
+  hello_table_t *hello_table = (hello_table_t *)malloc(sizeof(*hello_table));
+  hello_table->head = NULL;
+  hello_table->table_mutex = &hello_table_mutex;
+  processor_data_t processor_data = {msg_queue, hello_table, routing_table,
+                                     data->cout_mutex};
 
   pthread_create(&msg_sender, NULL, sender_main, (void *)&sender_data);
   pthread_create(&msg_receiver, NULL, receiver_main, (void *)&receiver_data);
+  pthread_create(&msg_processor, NULL, processor_main, (void *)&processor_data);
 
   pthread_join(msg_sender, NULL);
   pthread_join(msg_receiver, NULL);
+  pthread_join(msg_processor, NULL);
 
   return EXIT_SUCCESS;
 }
