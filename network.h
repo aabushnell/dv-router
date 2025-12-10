@@ -84,6 +84,8 @@ void free_parsed_msg(dv_parsed_msg_t *msg);
 
 msg_type_t get_msg_type(char *msg);
 
+void add_direct_route(dv_table_t *table, ip_subnet_t subnet, uint32_t cost);
+
 void dv_update(dv_table_t *table);
 
 void dv_sent(dv_table_t *table);

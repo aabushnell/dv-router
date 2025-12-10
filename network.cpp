@@ -210,6 +210,53 @@ msg_type_t get_msg_type(char *msg) {
   return MSG_UNKOWN;
 }
 
+void add_direct_route(dv_table_t *table, ip_subnet_t subnet, uint32_t cost) {
+  dv_dest_entry_t *current_dest = table->head;
+  while (current_dest != NULL) {
+    if (subnet_cmpr(current_dest->dest, subnet))
+      break;
+    current_dest = current_dest->next;
+  }
+
+  if (current_dest == NULL) {
+    current_dest = (dv_dest_entry_t *)malloc(sizeof(dv_dest_entry_t));
+    current_dest->dest = subnet;
+    current_dest->head = NULL;
+    current_dest->best = NULL; // Will be set below
+    current_dest->best_cost = INFINITY_COST;
+
+    // Insert at head
+    current_dest->next = table->head;
+    table->head = current_dest;
+  }
+
+  ip_addr_t direct_gateway = (ip_addr_t){0, 0, 0, 0};
+
+  dv_neighbor_entry_t *current_neighbor = current_dest->head;
+  while (current_neighbor != NULL) {
+    if (addr_cmpr(current_neighbor->neighbor_addr, direct_gateway))
+      break;
+    current_neighbor = current_neighbor->next;
+  }
+
+  if (current_neighbor == NULL) {
+    current_neighbor =
+        (dv_neighbor_entry_t *)malloc(sizeof(dv_neighbor_entry_t));
+    current_neighbor->neighbor_addr = direct_gateway;
+
+    // Insert at head of neighbors list
+    current_neighbor->next = current_dest->head;
+    current_dest->head = current_neighbor;
+  }
+
+  current_neighbor->cost = cost;
+
+  if (cost < current_dest->best_cost) {
+    current_dest->best_cost = cost;
+    current_dest->best = current_neighbor;
+  }
+}
+
 void dv_update(dv_table_t *table) { table->update_dv = true; }
 
 void dv_sent(dv_table_t *table) { table->update_dv = false; }
