@@ -1,7 +1,6 @@
 #include "processor.h"
 #include "network.h"
 #include "router.h"
-#include <ios>
 
 void *processor_main(void *arg) {
   processor_data_t *data = (processor_data_t *)arg;
