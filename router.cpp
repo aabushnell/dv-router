@@ -19,13 +19,14 @@ void *router_main(void *arg) {
   pthread_mutex_unlock(data->cout_mutex);
 
   auto interfaces = get_interfaces(data->cout_mutex);
+  auto local_ips = get_local_ips(interfaces);
   auto sockets = bind_sockets(interfaces, data->cout_mutex);
 
   pthread_t msg_sender;
   sender_data_t sender_data = {interfaces, sockets, data->cout_mutex};
 
   pthread_t msg_receiver;
-  receiver_data_t receiver_data = {sockets, data->cout_mutex};
+  receiver_data_t receiver_data = {local_ips, sockets, data->cout_mutex};
   pthread_t msg_processor;
 
   pthread_create(&msg_sender, NULL, sender_main, (void *)&sender_data);
@@ -104,6 +105,18 @@ std::vector<interface_info_t> get_interfaces(pthread_mutex_t *cout_mutex) {
 
   freeifaddrs(ifaddr);
   return interfaces;
+}
+
+std::vector<ip_addr_t>
+get_local_ips(std::vector<interface_info_t> &interfaces) {
+  std::vector<ip_addr_t> local_ips;
+  local_ips.reserve(interfaces.size());
+
+  for (auto &iface : interfaces) {
+    local_ips.push_back(iface.addr);
+  }
+
+  return local_ips;
 }
 
 std::vector<router_socket_t>

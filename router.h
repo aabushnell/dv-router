@@ -2,6 +2,7 @@
 #define ROUTER_H_INCLUDED
 
 #include <arpa/inet.h>
+#include <cstring>
 #include <ifaddrs.h>
 #include <iostream>
 #include <net/if.h>
@@ -11,7 +12,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-#include <cstring>
 
 #include "network.h"
 
@@ -65,6 +65,8 @@ typedef struct router_socket_t {
 void *router_main(void *arg);
 
 std::vector<interface_info_t> get_interfaces(pthread_mutex_t *cout_mutex);
+
+std::vector<ip_addr_t> get_local_ips(std::vector<interface_info_t> &interfaces);
 
 std::vector<router_socket_t>
 bind_sockets(std::vector<interface_info_t> &interfaces,
