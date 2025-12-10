@@ -41,7 +41,7 @@ void *receiver_main(void *arg) {
             bool is_local = false;
 
             for (auto &local_ip : data->local_ips) {
-              if (addr_cmpr(sender_ip, local_ip) == 0) {
+              if (addr_cmpr(sender_ip, local_ip)) {
                 is_local = true;
                 break;
               }
