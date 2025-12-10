@@ -49,6 +49,7 @@ void *processor_main(void *arg) {
       if (msg) {
         process_distance_vector(msg, data->table);
       }
+      print_routing_table(data->table, data->cout_mutex);
       continue;
     }
 
