@@ -2,12 +2,15 @@
 #define SENDER_H_INCLUDED
 
 #include "router.h"
+#include <network.h>
 #include <thread>
 #include <vector>
 
 typedef struct sender_data_t {
   std::vector<interface_info_t> &interfaces;
   std::vector<router_socket_t> &sockets;
+  hello_table_t *hello_table;
+  dv_table_t *routing_table;
   pthread_mutex_t *cout_mutex;
 } sender_data_t;
 
