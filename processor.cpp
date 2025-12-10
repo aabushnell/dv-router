@@ -5,17 +5,48 @@
 void *processor_main(void *arg) {
   processor_data_t *data = (processor_data_t *)arg;
 
-  char *msg_str = NULL;
   while (true) {
+    char *msg_str = NULL;
     pthread_mutex_lock(data->msg_queue->queue_mutex);
-    if (data->msg_queue->queue_len > 0) {
-      msg_str = get_msg_queue_head(data->msg_queue);
+    while (data->msg_queue->queue_len == 0) {
+      pthread_cond_wait(data->msg_queue->queue_cond,
+                        data->msg_queue->queue_mutex);
     }
+
+    msg_str = get_msg_queue_head(data->msg_queue);
     pthread_mutex_unlock(data->msg_queue->queue_mutex);
-    dv_parsed_msg_t *msg = parse_distance_vector(msg_str);
-    process_distance_vector(msg, data->table);
+
+    if (msg_str == NULL) {
+      continue;
+    }
+
+    msg_type_t type = get_msg_type(msg_str);
+
+    if (type == MSG_HELLO) {
+      pthread_mutex_lock(data->cout_mutex);
+      std::cout << "Processing msg of type MSG_HELLO" << std::endl;
+      pthread_mutex_unlock(data->cout_mutex);
+      // process_hello();
+      continue;
+    }
+
+    if (type == MSG_DV) {
+      pthread_mutex_lock(data->cout_mutex);
+      std::cout << "Processing msg of type MSG_DV" << std::endl;
+      pthread_mutex_unlock(data->cout_mutex);
+      dv_parsed_msg_t *msg = parse_distance_vector(msg_str);
+      if (msg) {
+        process_distance_vector(msg, data->table);
+      }
+      continue;
+    }
+
+    pthread_mutex_lock(data->cout_mutex);
+    std::cout << "Processing msg of type MSG_UNKNOWN" << std::endl;
+    pthread_mutex_unlock(data->cout_mutex);
   }
 }
+
 char *get_msg_queue_head(msg_queue_t *queue) {
   msg_queue_entry_t *head = queue->head;
   if (head->next != NULL) {
@@ -33,7 +64,7 @@ char *get_msg_queue_head(msg_queue_t *queue) {
 void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table) {
   bool dv_updated = false;
 
-  pthread_mutex_lock(table->mutex);
+  pthread_mutex_lock(table->table_mutex);
 
   dv_parsed_entry_t *current_route = msg->head;
 
@@ -119,5 +150,5 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table) {
   if (dv_updated) {
     dv_update(table);
   }
-  pthread_mutex_unlock(table->mutex);
+  pthread_mutex_unlock(table->table_mutex);
 }
