@@ -29,9 +29,21 @@ obj:
 bin:
 	$(MKDIR) $@
 
+# helpers
 clean:
 	rm -rf obj bin $(REBUILDABLES)
 
+start_all:
+	sudo systemctl start container@routerA container@routerB container@routerC container@host1 container@host2
+
+load_bin_all: load_bin_routerA load_bin_routerB load_bin_routerC load_bin_host1 load_bin_host2
+
+load_bin_%:
+	sudo cp bin/main /var/lib/nixos-containers/$*/root/router
+
+run_bin_%:
+	sudo nixos-container run $* -- /root/router
+	
 # dependency rules
 
 obj/main.o: obj/router.o router.h
