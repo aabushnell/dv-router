@@ -16,18 +16,20 @@ void *sender_main(void *arg) {
     pthread_mutex_lock(data->hello_table->table_mutex);
     hello_entry_t *current_entry = data->hello_table->head;
     while (current_entry != NULL) {
-      if (current_entry->last_seen <= current_time + 600) {
+      if (current_entry->last_seen <= current_time + 600 &&
+          current_entry->alive) {
         current_entry->alive = false;
         dying = true;
+        pthread_mutex_lock(data->cout_mutex);
+        std::cout << "Link " << current_entry->int_name << "is dead"
+                  << std::endl;
+        pthread_mutex_unlock(data->cout_mutex);
       }
       current_entry = current_entry->next;
     }
 
     if (dying) {
       data->hello_table->neighbor_dead = true;
-      pthread_mutex_lock(data->cout_mutex);
-      std::cout << "Link is dead" << std::endl;
-      pthread_mutex_unlock(data->cout_mutex);
     }
     pthread_mutex_unlock(data->hello_table->table_mutex);
 
