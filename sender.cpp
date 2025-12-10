@@ -91,6 +91,7 @@ void *sender_main(void *arg) {
                   << " (Bytes: " << bytes_sent << ")" << std::endl;
         pthread_mutex_unlock(data->cout_mutex);
       }
+      dv_sent(data->routing_table);
     }
     pthread_mutex_unlock(data->routing_table->table_mutex);
 
