@@ -42,6 +42,7 @@ typedef struct router_data_t {
 typedef struct msg_queue_entry_t {
   msg_queue_entry_t *next;
   char *msg_str;
+  char int_name[16];
 } msg_queue_entry_t;
 
 typedef struct msg_queue_t {
