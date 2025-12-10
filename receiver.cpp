@@ -8,6 +8,10 @@ void *receiver_main(void *arg) {
   int max_fd = 0;
 
   char *buffer = (char *)malloc(4096);
+  if (!buffer) {
+    return NULL;
+  }
+
   struct sockaddr_in sender_addr;
   socklen_t addr_len = sizeof(sender_addr);
 
@@ -32,10 +36,26 @@ void *receiver_main(void *arg) {
             char sender[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, &sender_addr.sin_addr, sender, INET_ADDRSTRLEN);
 
+            ip_addr_t sender_ip = get_addr_from_str(sender);
+
+            bool is_local = false;
+
+            for (auto &local_ip : data->local_ips) {
+              if (addr_cmpr(sender_ip, local_ip) == 0) {
+                is_local = true;
+                break;
+              }
+            }
+
+            // ignore messages from self
+            if (is_local) {
+              continue;
+            }
+
             pthread_mutex_lock(data->cout_mutex);
             std::cout << "Received update from " << sender << " on " << s.name
                       << std::endl;
-            std::cout << "  :" << buffer << std::endl;
+            std::cout << "  : " << buffer << std::endl;
             pthread_mutex_unlock(data->cout_mutex);
           }
         }
