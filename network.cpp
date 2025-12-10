@@ -147,6 +147,10 @@ dv_parsed_msg_t *parse_distance_vector(char *dv_str,
   }
   cursor += 4;
 
+  pthread_mutex_lock(cout_mutex);
+  std::cout << "Current char: " << *cursor << std::endl;
+  pthread_mutex_unlock(cout_mutex);
+
   while (*cursor == '(') {
     pthread_mutex_lock(cout_mutex);
     std::cout << "~~Parsing new destination" << std::endl;
