@@ -78,6 +78,8 @@ typedef struct hello_entry_t {
 typedef struct hello_table_t {
   hello_entry_t *head;
   pthread_mutex_t *table_mutex;
+  bool neighbor_added;
+  bool neighbor_dead;
 } hello_table_t;
 
 void *router_main(void *arg);
