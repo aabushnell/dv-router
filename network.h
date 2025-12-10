@@ -79,7 +79,8 @@ int netmask_to_prefix(char *netmask_str);
 
 char *get_distance_vector(dv_table_t *table, ip_addr_t sender);
 
-dv_parsed_msg_t *parse_distance_vector(char *dv_str);
+dv_parsed_msg_t *parse_distance_vector(char *dv_str,
+                                       pthread_mutex_t *cout_mutex);
 
 void free_parsed_msg(dv_parsed_msg_t *msg);
 

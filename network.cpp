@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <cstring>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -114,7 +115,8 @@ char *get_distance_vector(dv_table_t *table, ip_addr_t sender) {
   return buffer;
 }
 
-dv_parsed_msg_t *parse_distance_vector(char *dv_str) {
+dv_parsed_msg_t *parse_distance_vector(char *dv_str,
+                                       pthread_mutex_t *cout_mutex) {
   if (!dv_str) {
     return NULL;
   }
@@ -146,6 +148,9 @@ dv_parsed_msg_t *parse_distance_vector(char *dv_str) {
   cursor += 4;
 
   while (*cursor == '(') {
+    pthread_mutex_lock(cout_mutex);
+    std::cout << "~~Parsing new destination" << std::endl;
+    pthread_mutex_unlock(cout_mutex);
     cursor++;
     char *close_paren = strchr(cursor, ')');
     char *comma = strchr(cursor, ',');
