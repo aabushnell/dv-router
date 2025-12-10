@@ -44,6 +44,18 @@ void *router_main(void *arg) {
   msg_queue->queue_cond = &msg_queue_cond;
   msg_queue->queue_len = 0;
 
+  pthread_mutex_lock(&routing_table_mutex);
+
+  for (auto &iface : interfaces) {
+    ip_subnet_t connected_net;
+    connected_net.addr = iface.addr;
+    connected_net.addr.f4 = 0;
+    connected_net.prefix_len = iface.subnet.prefix_len;
+    add_direct_route(routing_table, connected_net, 1);
+    routing_table->update_dv = true;
+  }
+  pthread_mutex_unlock(&routing_table_mutex);
+
   pthread_t msg_sender;
   sender_data_t sender_data = {interfaces, sockets, hello_table, routing_table,
                                data->cout_mutex};
