@@ -92,4 +92,6 @@ void dv_update(dv_table_t *table);
 
 void dv_sent(dv_table_t *table);
 
+void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex);
+
 #endif

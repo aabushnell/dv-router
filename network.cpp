@@ -122,7 +122,7 @@ dv_parsed_msg_t *parse_distance_vector(char *dv_str) {
 
   dv_parsed_msg_t *msg_ll = (dv_parsed_msg_t *)malloc(sizeof(*msg_ll));
   msg_ll->head = NULL;
-  msg_ll->sender = (ip_addr_t){0};
+  msg_ll->sender = (ip_addr_t){0, 0, 0, 0};
 
   cursor = strchr(dv_str, ':');
   if (!cursor) {
@@ -164,16 +164,8 @@ dv_parsed_msg_t *parse_distance_vector(char *dv_str) {
     dv_parsed_entry_t *entry = (dv_parsed_entry_t *)malloc(sizeof(*entry));
     entry->dest = subnet;
     entry->cost = cost;
-    entry->next = NULL;
-    if (msg_ll->head != NULL) {
-      dv_parsed_entry_t *next = msg_ll->head;
-      while (next->next != NULL) {
-        next = next->next;
-      }
-      next->next = entry;
-    } else {
-      msg_ll->head = entry;
-    }
+    entry->next = msg_ll->head;
+    msg_ll->head = entry;
 
     cursor = close_paren + 2;
   }
@@ -264,3 +256,46 @@ void add_direct_route(dv_table_t *table, ip_subnet_t subnet, uint32_t cost,
 void dv_update(dv_table_t *table) { table->update_dv = true; }
 
 void dv_sent(dv_table_t *table) { table->update_dv = false; }
+
+void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
+  if (!table)
+    return;
+
+  pthread_mutex_lock(cout_mutex);
+  std::cout << "\n=== ROUTING TABLE ===\n";
+  std::cout << "Dest Subnet\t\tBest GW\t\tInterface\tCost\n";
+  std::cout << "------------------------------------------------------------\n";
+
+  dv_dest_entry_t *dest = table->head;
+  while (dest != NULL) {
+    char *subnet_str = get_str_from_subnet(dest->dest);
+
+    std::string gw_str = "None";
+    std::string cost_str = "INF";
+
+    if (dest->best != NULL) {
+      char *gw_ip = get_str_from_addr(dest->best->neighbor_addr);
+      gw_str = std::string(gw_ip);
+      free(gw_ip);
+
+      cost_str = std::to_string(dest->best_cost);
+    } else if (dest->best_cost >= INFINITY_COST) {
+      cost_str = "INF";
+    }
+
+    std::cout << subnet_str << "\t\t" << gw_str << "\t\t"
+              << "---"
+              << "\t\t" // Interface stored in hello table, not here usually?
+              << cost_str << "\n";
+
+    free(subnet_str);
+
+    // Optional: Print alternative candidates for this destination?
+    // dv_neighbor_entry_t *cand = dest->head;
+    // while(cand) { ... print cand ... cand=cand->next; }
+
+    dest = dest->next;
+  }
+  std::cout << "=====================\n\n";
+  pthread_mutex_unlock(cout_mutex);
+}

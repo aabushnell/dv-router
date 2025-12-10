@@ -56,6 +56,8 @@ void *router_main(void *arg) {
   }
   pthread_mutex_unlock(&routing_table_mutex);
 
+  print_routing_table(routing_table, data->cout_mutex);
+
   pthread_t msg_sender;
   sender_data_t sender_data = {interfaces, sockets, hello_table, routing_table,
                                data->cout_mutex};
