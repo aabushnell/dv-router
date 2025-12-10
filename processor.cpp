@@ -1,11 +1,23 @@
 #include "processor.h"
 #include "network.h"
 #include "router.h"
+#include <ios>
 
 void *processor_main(void *arg) {
   processor_data_t *data = (processor_data_t *)arg;
 
   while (true) {
+    // Check for changes in immediate topology
+    pthread_mutex_lock(data->hello_table->table_mutex);
+    bool added = data->hello_table->neighbor_added;
+    bool dead = data->hello_table->neighbor_dead;
+    pthread_mutex_unlock(data->hello_table->table_mutex);
+
+    if (added || dead) {
+      process_topology_change(data->hello_table, data->table);
+    }
+
+    // Check message queue
     pthread_mutex_lock(data->msg_queue->queue_mutex);
     while (data->msg_queue->queue_len == 0) {
       pthread_cond_wait(data->msg_queue->queue_cond,
@@ -63,6 +75,87 @@ msg_queue_entry_t *get_msg_queue_head(msg_queue_t *queue) {
   return head;
 }
 
+void process_topology_change(hello_table_t *hello_table,
+                             dv_table_t *routing_table) {
+  bool dv_updated = false;
+
+  pthread_mutex_lock(hello_table->table_mutex);
+  pthread_mutex_lock(routing_table->table_mutex);
+
+  hello_entry_t *current_entry = hello_table->head;
+
+  while (current_entry != NULL) {
+    ip_subnet_t link_subnet;
+    link_subnet.addr = current_entry->ip;
+    link_subnet.prefix_len = 24;
+    link_subnet.addr.f4 = 0;
+
+    dv_dest_entry_t *dest = routing_table->head;
+    while (dest != NULL) {
+      if (subnet_cmpr(dest->dest, link_subnet)) {
+        break;
+      }
+      dest = dest->next;
+    }
+
+    if (dest == NULL) {
+      dest = (dv_dest_entry_t *)malloc(sizeof(*dest));
+      dest->dest = link_subnet;
+      dest->head = NULL;
+      dest->best = NULL;
+      dest->best_cost = INFINITY_COST;
+      dest->next = routing_table->head;
+      routing_table->head = dest;
+    }
+
+    dv_neighbor_entry_t *route = dest->head;
+    while (route != NULL) {
+      if (addr_cmpr(route->neighbor_addr, current_entry->ip)) {
+        break;
+      }
+      route = route->next;
+    }
+
+    if (route == NULL) {
+      route = (dv_neighbor_entry_t *)malloc(sizeof(*route));
+      route->neighbor_addr = current_entry->ip;
+      route->next = dest->head;
+      dest->head = route;
+    }
+
+    uint32_t new_cost = current_entry->alive ? 1 : INFINITY_COST;
+
+    if (route->cost != new_cost) {
+      route->cost = new_cost;
+
+      dv_neighbor_entry_t *scan = dest->head;
+      uint32_t min_cost = INFINITY_COST;
+      dv_neighbor_entry_t *best = NULL;
+
+      while (scan != NULL) {
+        if (scan->cost < min_cost) {
+          min_cost = scan->cost;
+          best = scan;
+        }
+        scan = scan->next;
+      }
+      if (dest->best != best || dest->best_cost != min_cost) {
+        dest->best_cost = min_cost;
+        dest->best = best;
+        dv_updated = true;
+      }
+    }
+    current_entry = current_entry->next;
+  }
+
+  if (dv_updated) {
+    dv_update(routing_table);
+  }
+
+  pthread_mutex_unlock(hello_table->table_mutex);
+  pthread_mutex_unlock(routing_table->table_mutex);
+}
+
 void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
                    pthread_mutex_t *cout_mutex) {
   char *first_colon = strchr(msg, ':');
@@ -91,9 +184,11 @@ void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
   while (current_entry != NULL) {
     if (addr_cmpr(current_entry->ip, sender_ip)) {
       match_found = true;
-      current_entry->last_sn = sn;
-      current_entry->last_seen = time(NULL);
-      current_entry->alive = true;
+      if (current_entry->last_sn < sn) {
+        current_entry->last_sn = sn;
+        current_entry->last_seen = time(NULL);
+        current_entry->alive = true;
+      }
       break;
     }
     current_entry = current_entry->next;
@@ -109,6 +204,8 @@ void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
 
     new_entry->next = hello_table->head;
     hello_table->head = new_entry;
+
+    hello_table->neighbor_added = true;
 
     pthread_mutex_lock(cout_mutex);
     char *sender_ip_str = get_str_from_addr(sender_ip);

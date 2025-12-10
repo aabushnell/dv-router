@@ -13,6 +13,9 @@ typedef struct processor_data_t {
 
 msg_queue_entry_t *get_msg_queue_head(msg_queue_t *queue);
 
+void process_topology_change(hello_table_t *hello_table,
+                             dv_table_t *routing_table);
+
 void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
                    pthread_mutex_t *cout_mutex);
 
