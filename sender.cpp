@@ -1,10 +1,11 @@
 #include <sys/socket.h>
 
-#include "sender.h"
 #include "router.h"
+#include "sender.h"
 
 void *sender_main(void *arg) {
   sender_data_t *data = (sender_data_t *)arg;
+  size_t sn = 0;
   while (true) {
     for (size_t i = 0; i < data->sockets.size(); i++) {
       struct sockaddr_in dest_addr;
