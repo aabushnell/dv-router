@@ -262,12 +262,12 @@ void dv_update(dv_table_t *table) { table->update_dv = true; }
 
 void dv_sent(dv_table_t *table) { table->update_dv = false; }
 
-void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
+void print_dv_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
   if (!table)
     return;
 
   pthread_mutex_lock(cout_mutex);
-  std::cout << "\n=== ROUTING TABLE ===\n";
+  std::cout << "\n=== FORWARDING TABLE ===\n";
   std::cout << "Dest Subnet\t\tGW\t\tCost\n";
   std::cout << "------------------------------------------------------------\n";
 
@@ -295,5 +295,56 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
     dest = dest->next;
   }
   std::cout << "=====================\n\n";
+  pthread_mutex_unlock(cout_mutex);
+}
+
+void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
+  if (!table)
+    return;
+
+  pthread_mutex_lock(cout_mutex);
+  std::cout << "\n=== ROUTING TABLE ===\n";
+  std::cout << "Dest Subnet\t\tGW\t\tCost\tBest?\n";
+  std::cout << "---------------------------------------------------------------"
+               "-----\n";
+
+  dv_dest_entry_t *dest = table->head;
+  while (dest != NULL) {
+    char *subnet_str = get_str_from_subnet(dest->dest);
+
+    // Print header for this destination (optional)
+    // std::cout << "\n[Destination: " << subnet_str << "]\n";
+
+    // Iterate over ALL neighbors for this destination
+    dv_neighbor_entry_t *neigh = dest->head;
+
+    if (neigh == NULL) {
+      // No routes for this destination
+      std::cout << subnet_str << "\t\t"
+                << "---" << "\t\t"
+                << "---" << "\t"
+                << "---" << "\n";
+    }
+
+    while (neigh != NULL) {
+      char *gw_ip = get_str_from_addr(neigh->neighbor_addr);
+
+      std::string cost_str =
+          (neigh->cost >= INFINITY_COST) ? "INF" : std::to_string(neigh->cost);
+
+      // Mark if this is the best route
+      std::string best_marker = (dest->best == neigh) ? " *" : "";
+
+      std::cout << subnet_str << "\t\t" << gw_ip << "\t\t" << cost_str << "\t"
+                << best_marker << "\n";
+
+      free(gw_ip);
+      neigh = neigh->next;
+    }
+
+    free(subnet_str);
+    dest = dest->next;
+  }
+  std::cout << "============================\n\n";
   pthread_mutex_unlock(cout_mutex);
 }
