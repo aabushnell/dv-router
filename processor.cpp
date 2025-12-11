@@ -283,6 +283,7 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
     if (neighbor == NULL) {
       neighbor = (dv_neighbor_entry_t *)malloc(sizeof(*neighbor));
       neighbor->neighbor_addr = msg->sender;
+      neighbor->cost = INFINITY_COST;
       neighbor->next = dest->head;
       dest->head = neighbor;
     }
