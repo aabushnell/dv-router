@@ -272,12 +272,6 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
 
     // search for neighbor in dest entry
     while (current_neighbor != NULL) {
-      pthread_mutex_lock(cout_mutex);
-      char *nba = get_str_from_addr(current_neighbor->neighbor_addr);
-      std::cout << "~~ Parsing neighbor " << nba
-                << " with cost: " << current_neighbor->cost << std::endl;
-      free(nba);
-      pthread_mutex_unlock(cout_mutex);
       if (addr_cmpr(msg->sender, current_neighbor->neighbor_addr)) {
         neighbor = current_neighbor;
         break;
@@ -292,6 +286,14 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
       neighbor->next = dest->head;
       dest->head = neighbor;
     }
+
+    pthread_mutex_lock(cout_mutex);
+    char *nba = get_str_from_addr(current_neighbor->neighbor_addr);
+    std::cout << "~~ Parsing neighbor " << nba
+              << " with current cost: " << current_neighbor->cost
+              << " and new cost: " << current_route->cost + 1 << std::endl;
+    free(nba);
+    pthread_mutex_unlock(cout_mutex);
 
     uint32_t new_cost = current_route->cost + 1;
     if (new_cost > INFINITY_COST) {
