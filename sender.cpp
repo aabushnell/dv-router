@@ -16,7 +16,7 @@ void *sender_main(void *arg) {
     pthread_mutex_lock(data->hello_table->table_mutex);
     hello_entry_t *current_entry = data->hello_table->head;
     while (current_entry != NULL) {
-      if (current_entry->last_seen <= current_time - 600 &&
+      if ((current_time - current_entry->last_seen > 600) &&
           current_entry->alive) {
         current_entry->alive = false;
         dying = true;
