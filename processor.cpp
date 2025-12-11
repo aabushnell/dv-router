@@ -184,7 +184,7 @@ void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
   }
 
   uint16_t sn_net;
-  memcpy(&sn_net, hello_ptr + 7, sizeof(sn_net));
+  memcpy(&sn_net, hello_ptr + 6, sizeof(sn_net));
   uint16_t sn = ntohs(sn_net);
 
   pthread_mutex_lock(cout_mutex);
