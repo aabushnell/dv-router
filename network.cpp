@@ -335,8 +335,12 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
       // Mark if this is the best route
       std::string best_marker = (dest->best == neigh) ? " *" : "";
 
-      std::cout << subnet_str << "\t\t" << gw_ip << "\t\t" << cost_str << "\t"
-                << best_marker << "\n";
+      // clang-format off
+      std::cout << std::setw(24) << subnet_str
+                << std::setw(20) << gw_ip
+                << std::setw(8) << cost_str
+                << std::setw(8) << best_marker << "\n";
+      // clang-format on
 
       free(gw_ip);
       neigh = neigh->next;
