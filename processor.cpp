@@ -14,7 +14,11 @@ void *processor_main(void *arg) {
     pthread_mutex_unlock(data->hello_table->table_mutex);
 
     if (added || dead) {
+      pthread_mutex_lock(data->cout_mutex);
+      std::cout << "Processing topology change" << std::endl;
+      pthread_mutex_unlock(data->cout_mutex);
       process_topology_change(data->hello_table, data->table);
+      print_routing_table(data->table, data->cout_mutex);
     }
 
     // Check message queue

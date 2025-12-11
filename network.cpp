@@ -302,6 +302,7 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
   if (!table)
     return;
 
+  pthread_mutex_lock(table->table_mutex);
   pthread_mutex_lock(cout_mutex);
   std::cout << std::endl
             << "=========== ROUTING TABLE ===========" << std::endl;
@@ -361,5 +362,6 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
   std::cout
       << "--------------------------------------------------------------------"
       << std::endl;
+  pthread_mutex_unlock(table->table_mutex);
   pthread_mutex_unlock(cout_mutex);
 }
