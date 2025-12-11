@@ -90,6 +90,8 @@ void *router_main(void *arg) {
       hello_table->neighbor_dead = false;
       pthread_mutex_unlock(hello_table->table_mutex);
     }
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
   }
 
   pthread_join(msg_sender, NULL);
