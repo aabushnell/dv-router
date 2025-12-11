@@ -221,10 +221,19 @@ void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex) {
   pthread_mutex_lock(table->table_mutex);
   pthread_mutex_lock(cout_mutex);
 
-  std::cout << "\n=== NEIGHBOR TABLE ===\n";
-  std::cout << "Neighbor IP\t\tInterface\tLast SN\t\tAge (s)\tStatus\n";
+  std::cout << "\n=========================== NEIGHBOR TABLE "
+               "===========================\n";
+  // clang-format off
+  std::cout << std::setw(24) << std::left << "Neighbor"
+            << std::setw(16) << std::left << "Interface"
+            << std::setw(8) << std::left << "Last SN"
+            << std::setw(8) << std::left << "Age"
+            << std::setw(8) << std::left << "Status"
+            << std::endl;
+  // clang-format on
   std::cout << "---------------------------------------------------------------"
-               "--------\n";
+               "--------"
+            << std::endl;
 
   hello_entry_t *curr = table->head;
   time_t now = time(NULL);
@@ -242,8 +251,14 @@ void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex) {
     std::string interface =
         (curr->int_name[0] != '\0') ? curr->int_name : "???";
 
-    std::cout << ip_str << "\t\t" << interface << "\t\t" << curr->last_sn
-              << "\t\t" << age_seconds << "\t" << status << "\n";
+    // clang-format off
+    std::cout << std::setw(24) << std::left << ip_str
+              << std::setw(16) << std::left << interface
+              << std::setw(8) << std::left << curr->last_sn
+              << std::setw(8) << std::left << age_seconds
+              << std::setw(8) << std::left << status 
+              << std::endl;
+    // clang-format on
 
     free(ip_str);
     curr = curr->next;
@@ -253,7 +268,9 @@ void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex) {
     std::cout << "(No neighbors discovered yet)\n";
   }
 
-  std::cout << "======================\n\n";
+  std::cout << "---------------------------------------------------------------"
+               "--------"
+            << std::endl;
 
   pthread_mutex_unlock(cout_mutex);
   pthread_mutex_unlock(table->table_mutex);
