@@ -92,4 +92,6 @@ std::vector<router_socket_t>
 bind_sockets(std::vector<interface_info_t> &interfaces,
              pthread_mutex_t *cout_mutex);
 
+void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex);
+
 #endif

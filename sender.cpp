@@ -33,6 +33,8 @@ void *sender_main(void *arg) {
     }
     pthread_mutex_unlock(data->hello_table->table_mutex);
 
+    print_hello_table(data->hello_table, data->cout_mutex);
+
     // Send HELLOs
     for (size_t i = 0; i < data->sockets.size(); i++) {
       struct sockaddr_in dest_addr;

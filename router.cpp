@@ -213,3 +213,48 @@ bind_sockets(std::vector<interface_info_t> &interfaces,
 
   return sockets;
 }
+
+void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex) {
+  if (!table)
+    return;
+
+  pthread_mutex_lock(table->table_mutex);
+  pthread_mutex_lock(cout_mutex);
+
+  std::cout << "\n=== NEIGHBOR TABLE ===\n";
+  std::cout << "Neighbor IP\t\tInterface\tLast SN\t\tAge (s)\tStatus\n";
+  std::cout << "---------------------------------------------------------------"
+               "--------\n";
+
+  hello_entry_t *curr = table->head;
+  time_t now = time(NULL);
+
+  while (curr != NULL) {
+    char *ip_str = get_str_from_addr(curr->ip);
+
+    // Calculate Age
+    double age_seconds = difftime(now, curr->last_seen);
+
+    // Format Status
+    std::string status = curr->alive ? "ALIVE" : "DEAD";
+
+    // Ensure interface name is safe to print
+    std::string interface =
+        (curr->int_name[0] != '\0') ? curr->int_name : "???";
+
+    std::cout << ip_str << "\t\t" << interface << "\t\t" << curr->last_sn
+              << "\t\t" << age_seconds << "\t" << status << "\n";
+
+    free(ip_str);
+    curr = curr->next;
+  }
+
+  if (table->head == NULL) {
+    std::cout << "(No neighbors discovered yet)\n";
+  }
+
+  std::cout << "======================\n\n";
+
+  pthread_mutex_unlock(cout_mutex);
+  pthread_mutex_unlock(table->table_mutex);
+}
