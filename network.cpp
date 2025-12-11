@@ -311,7 +311,7 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
   std::cout << "---------------------------------------------------------------"
             << std::endl;
   // clang-format off
-  std::cout << std::setw(24) << std::left << "Dest"
+  std::cout << std::setw(22) << std::left << "Dest"
             << std::setw(20) << std::left << "Gateway"
             << std::setw(8) << std::left << "Cost"
             << std::setw(8) << std::left << "Best?"
@@ -348,7 +348,7 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
       std::string best_marker = (dest->best == neigh) ? " *" : "";
 
       // clang-format off
-      std::cout << std::setw(24) << std::left << subnet_str
+      std::cout << std::setw(22) << std::left << subnet_str
                 << std::setw(20) << std::left << gw_ip
                 << std::setw(8) << std::left << cost_str
                 << std::setw(8) << std::left << best_marker

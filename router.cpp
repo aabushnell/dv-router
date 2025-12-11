@@ -226,7 +226,7 @@ void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex) {
   std::cout << "---------------------------------------------------------------"
             << std::endl;
   // clang-format off
-  std::cout << std::setw(24) << std::left << "Neighbor"
+  std::cout << std::setw(22) << std::left << "Neighbor"
             << std::setw(16) << std::left << "Interface"
             << std::setw(8) << std::left << "Last SN"
             << std::setw(8) << std::left << "Age"
@@ -253,7 +253,7 @@ void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex) {
         (curr->int_name[0] != '\0') ? curr->int_name : "???";
 
     // clang-format off
-    std::cout << std::setw(24) << std::left << ip_str
+    std::cout << std::setw(22) << std::left << ip_str
               << std::setw(16) << std::left << interface
               << std::setw(8) << std::left << curr->last_sn
               << std::setw(8) << std::left << age_seconds
