@@ -244,7 +244,7 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
   while (current_route != NULL) {
     pthread_mutex_lock(cout_mutex);
     char *crd = get_str_from_subnet(current_route->dest);
-    std::cout << "~~ Parsing route " << crd << std::endl;
+    // std::cout << "~~ Parsing route " << crd << std::endl;
     free(crd);
     pthread_mutex_unlock(cout_mutex);
 
@@ -294,9 +294,9 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
 
     pthread_mutex_lock(cout_mutex);
     char *nba = get_str_from_addr(neighbor->neighbor_addr);
-    std::cout << "~~ Parsing neighbor " << nba
-              << " with current cost: " << neighbor->cost
-              << " and new cost: " << current_route->cost + 1 << std::endl;
+    // std::cout << "~~ Parsing neighbor " << nba
+    //           << " with current cost: " << neighbor->cost
+    //           << " and new cost: " << current_route->cost + 1 << std::endl;
     free(nba);
     pthread_mutex_unlock(cout_mutex);
 
@@ -311,13 +311,11 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
 
     if (new_cost < dest->best_cost) {
       // if new cost is better than old best cost
-      // update best cost
       dest->best_cost = new_cost;
       dest->best = neighbor;
       dv_updated = true;
     } else if (is_best && new_cost > old_cost) {
-      // if new cost is worse and this was
-      // previously the best route, recalculate
+      // if new cost is worse and this was previously the best route
       uint32_t min_cost = INFINITY_COST;
       dv_neighbor_entry_t *best_route = NULL;
       dv_neighbor_entry_t *current_cand = dest->head;
@@ -337,6 +335,9 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
     current_route = current_route->next;
   }
   if (dv_updated) {
+    pthread_mutex_lock(cout_mutex);
+    std::cout << "DV Updated!" << std::endl;
+    pthread_mutex_unlock(cout_mutex);
     dv_update(table);
   }
   pthread_mutex_unlock(table->table_mutex);
