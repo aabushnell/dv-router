@@ -94,4 +94,6 @@ bind_sockets(std::vector<interface_info_t> &interfaces,
 
 void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex);
 
+void sync_kernel_routes(dv_table_t *table, pthread_mutex_t *cout_mutex);
+
 #endif

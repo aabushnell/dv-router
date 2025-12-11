@@ -275,3 +275,54 @@ void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex) {
   pthread_mutex_unlock(cout_mutex);
   pthread_mutex_unlock(table->table_mutex);
 }
+
+void sync_kernel_routes(dv_table_t *table, pthread_mutex_t *cout_mutex) {
+  pthread_mutex_lock(table->table_mutex);
+
+  dv_dest_entry_t *dest = table->head;
+
+  while (dest != NULL) {
+    if (dest->best != dest->installed) {
+
+      char *dest_str = get_str_from_subnet(dest->dest);
+
+      // New route is valid, old was NULL/different
+      if (dest->best != NULL && dest->best_cost < INFINITY_COST) {
+
+        char *gw_ip = get_str_from_addr(dest->best->neighbor_addr);
+        char cmd[256];
+
+        // Check if this is a "Direct" route (GW is 0.0.0.0)
+        if (!addr_cmpr(dest->best->neighbor_addr, (ip_addr_t){0, 0, 0, 0})) {
+          snprintf(cmd, sizeof(cmd), "ip route replace %s via %s", dest_str,
+                   gw_ip);
+          pthread_mutex_lock(cout_mutex);
+          std::cout << "Running command: " << cmd << std::endl;
+          pthread_mutex_unlock(cout_mutex);
+          system(cmd);
+        }
+        free(gw_ip);
+
+        dest->installed = dest->best;
+      }
+      // New route is INVALID (Infinity/NULL), old was valid
+      else if (dest->installed != NULL) {
+        // Route became unreachable -> Delete it
+        char cmd[256];
+        snprintf(cmd, sizeof(cmd), "ip route del %s", dest_str);
+        pthread_mutex_lock(cout_mutex);
+        std::cout << "Running command: " << cmd << std::endl;
+        pthread_mutex_unlock(cout_mutex);
+        system(cmd);
+
+        dest->installed = NULL;
+      }
+
+      free(dest_str);
+    }
+
+    dest = dest->next;
+  }
+
+  pthread_mutex_unlock(table->table_mutex);
+}
