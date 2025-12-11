@@ -9,7 +9,7 @@ void *processor_main(void *arg) {
   while (true) {
     // Check for changes in immediate topology
     pthread_mutex_lock(data->hello_table->table_mutex);
-    bool added = data->hello_table->neighbor_added;
+    // bool added = data->hello_table->neighbor_added;
     bool dead = data->hello_table->neighbor_dead;
     pthread_mutex_unlock(data->hello_table->table_mutex);
 
@@ -146,21 +146,23 @@ void handle_dead_link(hello_table_t *hello_table, dv_table_t *routing_table) {
           route = route->next;
         }
 
-        dv_neighbor_entry_t *scan = dest->head;
-        uint32_t min_cost = INFINITY_COST;
-        dv_neighbor_entry_t *best = NULL;
+        if (recalc_needed) {
+          dv_neighbor_entry_t *scan = dest->head;
+          uint32_t min_cost = INFINITY_COST;
+          dv_neighbor_entry_t *best = NULL;
 
-        while (scan != NULL) {
-          if (scan->cost < min_cost) {
-            min_cost = scan->cost;
-            best = scan;
+          while (scan != NULL) {
+            if (scan->cost < min_cost) {
+              min_cost = scan->cost;
+              best = scan;
+            }
+            scan = scan->next;
           }
-          scan = scan->next;
-        }
-        if (dest->best != best || dest->best_cost != min_cost) {
-          dest->best_cost = min_cost;
-          dest->best = best;
-          dv_updated = true;
+          if (dest->best != best || dest->best_cost != min_cost) {
+            dest->best_cost = min_cost;
+            dest->best = best;
+            dv_updated = true;
+          }
         }
 
         dest = dest->next;
