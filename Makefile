@@ -36,10 +36,18 @@ clean:
 start_all:
 	sudo systemctl start container@routerA container@routerB container@routerC container@host1 container@host2
 
-load_bin_all: load_bin_routerA load_bin_routerB load_bin_routerC load_bin_host1 load_bin_host2
+stop_all:
+	sudo systemctl stop container@routerA container@routerB container@routerC container@host1 container@host2
+
+restart_all:
+	sudo systemctl restart container@routerA container@routerB container@routerC container@host1 container@host2
+
+load_all: load_bin_routerA load_bin_routerB load_bin_routerC
 
 load_bin_%:
 	sudo cp bin/main /var/lib/nixos-containers/$*/root/router
+
+run_all: run_bin_routerA run_bin_routerB run_bin_routerC
 
 run_bin_%:
 	sudo nixos-container run $* -- /root/router
