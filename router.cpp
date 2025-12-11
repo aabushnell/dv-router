@@ -298,8 +298,6 @@ void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex) {
 }
 
 void sync_kernel_routes(dv_table_t *table, pthread_mutex_t *cout_mutex) {
-  pthread_mutex_lock(table->table_mutex);
-
   dv_dest_entry_t *dest = table->head;
 
   while (dest != NULL) {
@@ -344,6 +342,4 @@ void sync_kernel_routes(dv_table_t *table, pthread_mutex_t *cout_mutex) {
 
     dest = dest->next;
   }
-
-  pthread_mutex_unlock(table->table_mutex);
 }
