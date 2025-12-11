@@ -303,10 +303,18 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
     return;
 
   pthread_mutex_lock(cout_mutex);
-  std::cout << "\n=== ROUTING TABLE ===\n";
-  std::cout << "Dest Subnet\t\tGW\t\tCost\tBest?\n";
-  std::cout << "---------------------------------------------------------------"
-               "-----\n";
+  std::cout << std::endl
+            << "=========== ROUTING TABLE ===========" << std::endl;
+  // clang-format off
+  std::cout << std::setw(24) << std::left << "Dest"
+            << std::setw(20) << std::left << "Gateway"
+            << std::setw(8) << std::left << "Cost"
+            << std::setw(8) << std::left << "Best?"
+            << std::endl;
+  // clang-format on
+  std::cout
+      << "--------------------------------------------------------------------"
+      << std::endl;
 
   dv_dest_entry_t *dest = table->head;
   while (dest != NULL) {
@@ -350,6 +358,8 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
     free(subnet_str);
     dest = dest->next;
   }
-  std::cout << "============================\n\n";
+  std::cout
+      << "--------------------------------------------------------------------"
+      << std::endl;
   pthread_mutex_unlock(cout_mutex);
 }
