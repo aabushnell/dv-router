@@ -73,6 +73,25 @@ void *router_main(void *arg) {
   pthread_create(&msg_receiver, NULL, receiver_main, (void *)&receiver_data);
   pthread_create(&msg_processor, NULL, processor_main, (void *)&processor_data);
 
+  while (true) {
+    // Check for changes in immediate topology
+    pthread_mutex_lock(hello_table->table_mutex);
+    // bool added = data->hello_table->neighbor_added;
+    bool dead = hello_table->neighbor_dead;
+    pthread_mutex_unlock(hello_table->table_mutex);
+
+    if (dead) {
+      pthread_mutex_lock(data->cout_mutex);
+      std::cout << "Processing topology change" << std::endl;
+      pthread_mutex_unlock(data->cout_mutex);
+      handle_dead_link(hello_table, routing_table);
+      print_routing_table(routing_table, data->cout_mutex);
+      pthread_mutex_lock(hello_table->table_mutex);
+      hello_table->neighbor_dead = false;
+      pthread_mutex_unlock(hello_table->table_mutex);
+    }
+  }
+
   pthread_join(msg_sender, NULL);
   pthread_join(msg_receiver, NULL);
   pthread_join(msg_processor, NULL);

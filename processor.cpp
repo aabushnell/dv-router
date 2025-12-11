@@ -7,23 +7,6 @@ void *processor_main(void *arg) {
   processor_data_t *data = (processor_data_t *)arg;
 
   while (true) {
-    // Check for changes in immediate topology
-    pthread_mutex_lock(data->hello_table->table_mutex);
-    // bool added = data->hello_table->neighbor_added;
-    bool dead = data->hello_table->neighbor_dead;
-    pthread_mutex_unlock(data->hello_table->table_mutex);
-
-    if (dead) {
-      pthread_mutex_lock(data->cout_mutex);
-      std::cout << "Processing topology change" << std::endl;
-      pthread_mutex_unlock(data->cout_mutex);
-      handle_dead_link(data->hello_table, data->table);
-      print_routing_table(data->table, data->cout_mutex);
-      pthread_mutex_lock(data->hello_table->table_mutex);
-      data->hello_table->neighbor_dead = false;
-      pthread_mutex_unlock(data->hello_table->table_mutex);
-    }
-
     // Check message queue
     pthread_mutex_lock(data->msg_queue->queue_mutex);
     while (data->msg_queue->queue_len == 0) {

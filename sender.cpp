@@ -27,7 +27,6 @@ void *sender_main(void *arg) {
       }
       current_entry = current_entry->next;
     }
-
     if (dying) {
       data->hello_table->neighbor_dead = true;
     }
