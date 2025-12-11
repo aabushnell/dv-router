@@ -19,6 +19,9 @@ void *processor_main(void *arg) {
       pthread_mutex_unlock(data->cout_mutex);
       handle_dead_link(data->hello_table, data->table);
       print_routing_table(data->table, data->cout_mutex);
+      pthread_mutex_lock(data->hello_table->table_mutex);
+      data->hello_table->neighbor_dead = false;
+      pthread_mutex_unlock(data->hello_table->table_mutex);
     }
 
     // Check message queue
