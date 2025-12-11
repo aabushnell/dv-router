@@ -13,7 +13,7 @@ void *processor_main(void *arg) {
     bool dead = data->hello_table->neighbor_dead;
     pthread_mutex_unlock(data->hello_table->table_mutex);
 
-    if (added || dead) {
+    if ((added || dead) && false) {
       pthread_mutex_lock(data->cout_mutex);
       std::cout << "Processing topology change" << std::endl;
       pthread_mutex_unlock(data->cout_mutex);
