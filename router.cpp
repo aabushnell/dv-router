@@ -221,9 +221,6 @@ void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex) {
   pthread_mutex_lock(table->table_mutex);
   pthread_mutex_lock(cout_mutex);
 
-  std::cout << "---------------------------------------------------------------"
-               "--------"
-            << std::endl;
   std::cout << "\n========================= NEIGHBOR TABLE "
                "==============================\n";
   std::cout << "---------------------------------------------------------------"
