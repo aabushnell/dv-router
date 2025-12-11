@@ -40,6 +40,7 @@ typedef struct dv_dest_entry_t {
   ip_subnet_t dest;
   dv_neighbor_entry_t *head;
   dv_neighbor_entry_t *best;
+  dv_neighbor_entry_t *installed;
   uint32_t best_cost;
 } dv_dest_entry_t;
 

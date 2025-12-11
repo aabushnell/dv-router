@@ -208,6 +208,7 @@ void process_topology_change(hello_table_t *hello_table,
       dest->dest = link_subnet;
       dest->head = NULL;
       dest->best = NULL;
+      dest->installed = NULL;
       dest->best_cost = INFINITY_COST;
       dest->next = routing_table->head;
       routing_table->head = dest;
@@ -365,6 +366,7 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
       dest->dest = current_route->dest;
       dest->head = NULL;
       dest->best = NULL;
+      dest->installed = NULL;
       dest->best_cost = INFINITY_COST;
       dest->next = table->head;
       table->head = dest;

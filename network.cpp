@@ -218,7 +218,8 @@ void add_direct_route(dv_table_t *table, ip_subnet_t subnet, uint32_t cost,
     current_dest = (dv_dest_entry_t *)malloc(sizeof(dv_dest_entry_t));
     current_dest->dest = subnet;
     current_dest->head = NULL;
-    current_dest->best = NULL; // Will be set below
+    current_dest->best = NULL;
+    current_dest->installed = NULL;
     current_dest->best_cost = INFINITY_COST;
 
     // Insert at head
