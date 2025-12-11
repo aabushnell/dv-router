@@ -168,8 +168,8 @@ void handle_dead_link(hello_table_t *hello_table, dv_table_t *routing_table) {
         dest = dest->next;
       }
     }
+    current_entry = current_entry->next;
   }
-  current_entry = current_entry->next;
 
   if (dv_updated) {
     dv_update(routing_table);
