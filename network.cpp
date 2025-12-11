@@ -304,9 +304,15 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
 
   pthread_mutex_lock(table->table_mutex);
   pthread_mutex_lock(cout_mutex);
+  std::cout << "---------------------------------------------------------------"
+               "-------"
+            << std::endl;
   std::cout << std::endl
-            << "============================== ROUTING TABLE "
+            << "========================= ROUTING TABLE "
                "=============================="
+            << std::endl;
+  std::cout << "---------------------------------------------------------------"
+               "-------"
             << std::endl;
   // clang-format off
   std::cout << std::setw(24) << std::left << "Dest"
