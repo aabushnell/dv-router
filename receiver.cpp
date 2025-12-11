@@ -63,6 +63,7 @@ void *receiver_main(void *arg) {
             new_node->msg_str = (char *)malloc(n + 1);
             memcpy(new_node->msg_str, buffer, n);
             new_node->msg_str[n] = '\0';
+            memcpy(new_node->int_name, s.name.c_str(), 16);
             new_node->next = NULL;
 
             pthread_mutex_lock(data->msg_queue->queue_mutex);

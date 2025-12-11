@@ -187,6 +187,10 @@ void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
   memcpy(&sn_net, hello_ptr + 7, sizeof(sn_net));
   uint16_t sn = ntohs(sn_net);
 
+  pthread_mutex_lock(cout_mutex);
+  std::cout << "SN: " << sn << std::endl;
+  pthread_mutex_unlock(cout_mutex);
+
   pthread_mutex_lock(hello_table->table_mutex);
 
   hello_entry_t *current_entry = hello_table->head;
@@ -221,6 +225,7 @@ void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
     pthread_mutex_lock(cout_mutex);
     char *sender_ip_str = get_str_from_addr(sender_ip);
     std::cout << "New Neighbor Found @ " << sender_ip_str << "!" << std::endl;
+    free(sender_ip_str);
     pthread_mutex_unlock(cout_mutex);
   }
 
