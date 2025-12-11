@@ -133,6 +133,7 @@ void handle_dead_link(hello_table_t *hello_table, dv_table_t *routing_table) {
               dv_updated = true;
             }
           }
+          dest = dest->next;
           continue;
         }
 
