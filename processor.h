@@ -22,6 +22,8 @@ void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
 void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
                              pthread_mutex_t *cout_mutex);
 
+void handle_dead_link(hello_table_t *hello_table, dv_table_t *routing_table);
+
 void *processor_main(void *arg);
 
 #endif

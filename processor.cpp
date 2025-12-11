@@ -13,11 +13,11 @@ void *processor_main(void *arg) {
     bool dead = data->hello_table->neighbor_dead;
     pthread_mutex_unlock(data->hello_table->table_mutex);
 
-    if ((added || dead) && false) {
+    if (dead) {
       pthread_mutex_lock(data->cout_mutex);
       std::cout << "Processing topology change" << std::endl;
       pthread_mutex_unlock(data->cout_mutex);
-      process_topology_change(data->hello_table, data->table);
+      handle_dead_link(data->hello_table, data->table);
       print_routing_table(data->table, data->cout_mutex);
     }
 
@@ -84,6 +84,97 @@ msg_queue_entry_t *get_msg_queue_head(msg_queue_t *queue) {
     queue->queue_len = 0;
   }
   return head;
+}
+
+void handle_dead_link(hello_table_t *hello_table, dv_table_t *routing_table) {
+  bool dv_updated = false;
+
+  pthread_mutex_lock(hello_table->table_mutex);
+  pthread_mutex_lock(routing_table->table_mutex);
+
+  hello_entry_t *current_entry = hello_table->head;
+
+  while (current_entry != NULL) {
+    if (!current_entry->alive) {
+
+      ip_subnet_t link_subnet;
+      link_subnet.addr = current_entry->ip;
+      link_subnet.prefix_len = 24;
+      link_subnet.addr.f4 = 0;
+
+      dv_dest_entry_t *dest = routing_table->head;
+      while (dest != NULL) {
+        if (subnet_cmpr(dest->dest, link_subnet)) {
+          dv_neighbor_entry_t *route = dest->head;
+          bool recalc_needed = false;
+          while (route != NULL) {
+            if (addr_cmpr(route->neighbor_addr, (ip_addr_t){0, 0, 0, 0}) ||
+                addr_cmpr(route->neighbor_addr, current_entry->ip)) {
+              route->cost = INFINITY_COST;
+              recalc_needed = true;
+            }
+            route = route->next;
+          }
+          if (recalc_needed) {
+            dv_neighbor_entry_t *scan = dest->head;
+            uint32_t min_cost = INFINITY_COST;
+            dv_neighbor_entry_t *best = NULL;
+
+            while (scan != NULL) {
+              if (scan->cost < min_cost) {
+                min_cost = scan->cost;
+                best = scan;
+              }
+              scan = scan->next;
+            }
+            if (dest->best != best || dest->best_cost != min_cost) {
+              dest->best_cost = min_cost;
+              dest->best = best;
+              dv_updated = true;
+            }
+          }
+          continue;
+        }
+
+        dv_neighbor_entry_t *route = dest->head;
+        bool recalc_needed = false;
+        while (route != NULL) {
+          if (addr_cmpr(route->neighbor_addr, current_entry->ip)) {
+            route->cost = INFINITY_COST;
+            recalc_needed = true;
+          }
+          route = route->next;
+        }
+
+        dv_neighbor_entry_t *scan = dest->head;
+        uint32_t min_cost = INFINITY_COST;
+        dv_neighbor_entry_t *best = NULL;
+
+        while (scan != NULL) {
+          if (scan->cost < min_cost) {
+            min_cost = scan->cost;
+            best = scan;
+          }
+          scan = scan->next;
+        }
+        if (dest->best != best || dest->best_cost != min_cost) {
+          dest->best_cost = min_cost;
+          dest->best = best;
+          dv_updated = true;
+        }
+
+        dest = dest->next;
+      }
+    }
+  }
+  current_entry = current_entry->next;
+
+  if (dv_updated) {
+    dv_update(routing_table);
+  }
+
+  pthread_mutex_unlock(hello_table->table_mutex);
+  pthread_mutex_unlock(routing_table->table_mutex);
 }
 
 void process_topology_change(hello_table_t *hello_table,
