@@ -11,13 +11,13 @@ void *sender_main(void *arg) {
   uint16_t dv_counter = 0;
   while (true) {
     // Check for liveness
-    time_t current_time = time(NULL);
     bool dying = false;
     pthread_mutex_lock(data->hello_table->table_mutex);
     hello_entry_t *current_entry = data->hello_table->head;
     while (current_entry != NULL) {
-      if ((current_time - current_entry->last_seen > 600) &&
-          current_entry->alive) {
+      time_t current_time = time(NULL);
+      double age_seconds = difftime(current_time, current_entry->last_seen);
+      if (age_seconds > 10 && current_entry->alive) {
         current_entry->alive = false;
         dying = true;
         pthread_mutex_lock(data->cout_mutex);
