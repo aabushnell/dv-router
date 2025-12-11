@@ -35,7 +35,7 @@ void *processor_main(void *arg) {
 
     if (type == MSG_HELLO) {
       pthread_mutex_lock(data->cout_mutex);
-      std::cout << "Processing msg of type MSG_HELLO" << std::endl;
+      // std::cout << "Processing msg of type MSG_HELLO" << std::endl;
       pthread_mutex_unlock(data->cout_mutex);
       process_hello(msg_entry->msg_str, msg_entry->int_name, data->hello_table,
                     data->cout_mutex);
@@ -44,8 +44,8 @@ void *processor_main(void *arg) {
 
     if (type == MSG_DV) {
       pthread_mutex_lock(data->cout_mutex);
-      std::cout << "Processing msg of type MSG_DV: " << msg_entry->msg_str
-                << std::endl;
+      // std::cout << "Processing msg of type MSG_DV: " << msg_entry->msg_str
+      //           << std::endl;
       pthread_mutex_unlock(data->cout_mutex);
       dv_parsed_msg_t *msg =
           parse_distance_vector(msg_entry->msg_str, data->cout_mutex);
@@ -240,7 +240,7 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
   while (current_route != NULL) {
     pthread_mutex_lock(cout_mutex);
     char *crd = get_str_from_subnet(current_route->dest);
-    std::cout << "~~ Parsing route " << crd << std::endl;
+    // std::cout << "~~ Parsing route " << crd << std::endl;
     free(crd);
     pthread_mutex_unlock(cout_mutex);
 

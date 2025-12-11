@@ -149,7 +149,7 @@ dv_parsed_msg_t *parse_distance_vector(char *dv_str,
 
   while (*cursor == '(') {
     pthread_mutex_lock(cout_mutex);
-    std::cout << "~~Parsing new destination" << std::endl;
+    // std::cout << "~~Parsing new destination" << std::endl;
     pthread_mutex_unlock(cout_mutex);
     cursor++;
     char *close_paren = strchr(cursor, ')');
