@@ -425,7 +425,7 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
     pthread_mutex_lock(cout_mutex);
     std::cout << "DV Updated! installing new routes" << std::endl;
     pthread_mutex_unlock(cout_mutex);
-    // sync_kernel_routes(table, cout_mutex);
+    sync_kernel_routes(table, cout_mutex);
     dv_update(table);
   }
   pthread_mutex_unlock(table->table_mutex);
