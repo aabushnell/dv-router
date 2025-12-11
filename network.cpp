@@ -268,7 +268,7 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
 
   pthread_mutex_lock(cout_mutex);
   std::cout << "\n=== ROUTING TABLE ===\n";
-  std::cout << "Dest Subnet\t\tBest GW\t\tInterface\tCost\n";
+  std::cout << "Dest Subnet\t\tGW\t\tCost\n";
   std::cout << "------------------------------------------------------------\n";
 
   dv_dest_entry_t *dest = table->head;
@@ -288,16 +288,9 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
       cost_str = "INF";
     }
 
-    std::cout << subnet_str << "\t\t" << gw_str << "\t\t"
-              << "---"
-              << "\t\t" // Interface stored in hello table, not here usually?
-              << cost_str << "\n";
+    std::cout << subnet_str << "\t\t" << gw_str << "\t\t" << cost_str << "\n";
 
     free(subnet_str);
-
-    // Optional: Print alternative candidates for this destination?
-    // dv_neighbor_entry_t *cand = dest->head;
-    // while(cand) { ... print cand ... cand=cand->next; }
 
     dest = dest->next;
   }
