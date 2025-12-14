@@ -105,6 +105,9 @@ std::vector<interface_info_t> get_interfaces(pthread_mutex_t *cout_mutex) {
   std::vector<interface_info_t> interfaces;
   struct ifaddrs *ifaddr, *ifa;
 
+  // implementation of getiaddrs loop inspired by
+  // https://www.man7.org/linux/man-pages/man3/getifaddrs.3.html
+
   if (getifaddrs(&ifaddr) == -1) {
     pthread_mutex_lock(cout_mutex);
     std::cout << "ERROR: getifaddrs failed" << std::endl;

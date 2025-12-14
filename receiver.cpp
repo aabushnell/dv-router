@@ -26,6 +26,9 @@ void *receiver_main(void *arg) {
       }
     }
 
+    // select functionality based on
+    // https://www.man7.org/linux/man-pages/man2/select.2.html
+
     int pending_sockets = select(max_fd + 1, &readfds, NULL, NULL, NULL);
 
     if (pending_sockets > 0) {
