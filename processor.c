@@ -1,7 +1,12 @@
-#include "processor.h"
-#include "network.h"
-#include "router.h"
 #include <pthread.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "network.h"
+#include "processor.h"
+#include "router.h"
 
 void *processor_main(void *arg) {
   processor_data_t *data = (processor_data_t *)arg;

@@ -1,9 +1,6 @@
 #ifndef SENDER_H_INCLUDED
 #define SENDER_H_INCLUDED
 
-#include <thread>
-#include <vector>
-
 #include "network.h"
 #include "router.h"
 

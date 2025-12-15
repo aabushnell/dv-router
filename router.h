@@ -2,16 +2,14 @@
 #define ROUTER_H_INCLUDED
 
 #include <arpa/inet.h>
-#include <cstring>
 #include <ifaddrs.h>
-#include <iostream>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <vector>
 
 #include "network.h"
 
@@ -24,7 +22,7 @@
 #define PROTOCOL_PORT 5555
 
 typedef struct router_msg_t {
-  router_msg_t *next;
+  struct router_msg_t *next;
   char *msg;
 } router_msg_t;
 
@@ -40,7 +38,7 @@ typedef struct router_data_t {
 } router_data_t;
 
 typedef struct msg_queue_entry_t {
-  msg_queue_entry_t *next;
+  struct msg_queue_entry_t *next;
   char *msg_str;
   char int_name[16];
 } msg_queue_entry_t;
@@ -66,7 +64,7 @@ typedef struct router_socket_t {
 } router_socket_t;
 
 typedef struct hello_entry_t {
-  hello_entry_t *next;
+  struct hello_entry_t *next;
 
   ip_addr_t ip;
   uint16_t last_sn;

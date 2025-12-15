@@ -2,12 +2,10 @@
 #define NETWORK_H_INCLUDED
 
 #include <arpa/inet.h>
-#include <cstdint>
 #include <ifaddrs.h>
-#include <iomanip>
-#include <iostream>
 #include <net/if.h>
 #include <pthread.h>
+#include <stdbool.h>
 
 #define INFINITY_COST 16
 
@@ -26,7 +24,7 @@ typedef struct ip_subnet_t {
 // linked list of advertised neighbor
 // routes for a specific destination
 typedef struct dv_neighbor_entry_t {
-  dv_neighbor_entry_t *next;
+  struct dv_neighbor_entry_t *next;
 
   ip_addr_t neighbor_addr;
   uint32_t cost;
@@ -35,7 +33,7 @@ typedef struct dv_neighbor_entry_t {
 // linked list of advertised destinations
 // containing dv_neighbor_route list
 typedef struct dv_dest_entry_t {
-  dv_dest_entry_t *next;
+  struct dv_dest_entry_t *next;
 
   ip_subnet_t dest;
   dv_neighbor_entry_t *head;
@@ -52,7 +50,7 @@ typedef struct dv_table_t {
 } dv_table_t;
 
 typedef struct dv_parsed_entry_t {
-  dv_parsed_entry_t *next;
+  struct dv_parsed_entry_t *next;
 
   ip_subnet_t dest;
   uint32_t cost;

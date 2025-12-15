@@ -1,6 +1,8 @@
-#include <cstdlib>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
 
 #include "network.h"
@@ -261,7 +263,7 @@ router_socket_t *bind_sockets(interface_info_t *interfaces, int count,
     addr.sin_port = htons(PROTOCOL_PORT);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    if (::bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
       pthread_mutex_lock(cout_mutex);
       printf("ERROR: could not bind socket\n");
       pthread_mutex_unlock(cout_mutex);
