@@ -190,6 +190,8 @@ interface_info_t *get_interfaces(pthread_mutex_t *cout_mutex, int *out_count) {
       pthread_mutex_lock(cout_mutex);
       printf("Found interface: %s\n", info->int_name);
       pthread_mutex_unlock(cout_mutex);
+
+      count++;
     }
   }
 
