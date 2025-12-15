@@ -1,4 +1,6 @@
+#include <cstdint>
 #include <netinet/in.h>
+#include <network.h>
 #include <sys/socket.h>
 
 #include "receiver.h"
@@ -19,7 +21,8 @@ void *receiver_main(void *arg) {
 
   while (true) {
     FD_ZERO(&readfds);
-    for (auto &s : data->sockets) {
+    for (uint16_t i = 0; i < data->sockets.count; i++) {
+      router_socket_t s = data->sockets.sockets[i];
       FD_SET(s.fd, &readfds);
       if (s.fd > max_fd) {
         max_fd = s.fd;
@@ -32,7 +35,8 @@ void *receiver_main(void *arg) {
     int pending_sockets = select(max_fd + 1, &readfds, NULL, NULL, NULL);
 
     if (pending_sockets > 0) {
-      for (auto &s : data->sockets) {
+      for (uint16_t i = 0; i < data->sockets.count; i++) {
+        router_socket_t s = data->sockets.sockets[i];
         if (FD_ISSET(s.fd, &readfds)) {
           int n = recvfrom(s.fd, buffer, REC_BUFF_SIZE - 1, 0,
                            (struct sockaddr *)&sender_addr, &addr_len);
@@ -45,7 +49,8 @@ void *receiver_main(void *arg) {
 
             bool is_local = false;
 
-            for (auto &local_ip : data->local_ips) {
+            for (uint16_t i = 0; i < data->local_ips.count; i++) {
+              ip_addr_t local_ip = data->local_ips.ips[i];
               if (addr_cmpr(sender_ip, local_ip)) {
                 is_local = true;
                 break;
@@ -66,7 +71,7 @@ void *receiver_main(void *arg) {
             new_node->msg_str = (char *)malloc(n + 1);
             memcpy(new_node->msg_str, buffer, n);
             new_node->msg_str[n] = '\0';
-            memcpy(new_node->int_name, s.name.c_str(), 16);
+            memcpy(new_node->int_name, s.name, 16);
             new_node->next = NULL;
 
             pthread_mutex_lock(data->msg_queue->queue_mutex);

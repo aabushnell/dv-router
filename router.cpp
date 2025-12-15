@@ -1,7 +1,9 @@
+#include <cstdint>
 #include <cstdlib>
 #include <netinet/in.h>
 #include <pthread.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
 #include "network.h"
 #include "processor.h"
@@ -18,9 +20,9 @@ void *router_main(void *arg) {
   std::cout << "Hello I am router " << router_id << std::endl;
   pthread_mutex_unlock(data->cout_mutex);
 
-  auto interfaces = get_interfaces(data->cout_mutex);
-  auto local_ips = get_local_ips(interfaces);
-  auto sockets = bind_sockets(interfaces, data->cout_mutex);
+  interface_list_t interfaces = get_interfaces(data->cout_mutex);
+  local_ip_list_t local_ips = get_local_ips(interfaces);
+  socket_list_t sockets = bind_sockets(interfaces, data->cout_mutex);
 
   pthread_mutex_t routing_table_mutex = PTHREAD_MUTEX_INITIALIZER;
   dv_table_t *routing_table = (dv_table_t *)malloc(sizeof(*routing_table));
@@ -46,7 +48,8 @@ void *router_main(void *arg) {
 
   pthread_mutex_lock(&routing_table_mutex);
 
-  for (auto &iface : interfaces) {
+  for (uint16_t i = 0; i < interfaces.count; i++) {
+    interface_info_t iface = interfaces.interfaces[i];
     ip_subnet_t connected_net;
     connected_net.addr = iface.addr;
     connected_net.addr.f4 = 0;
@@ -101,8 +104,7 @@ void *router_main(void *arg) {
   return EXIT_SUCCESS;
 }
 
-std::vector<interface_info_t> get_interfaces(pthread_mutex_t *cout_mutex) {
-  std::vector<interface_info_t> interfaces;
+interface_list_t get_interfaces(pthread_mutex_t *cout_mutex) {
   struct ifaddrs *ifaddr, *ifa;
 
   // implementation of getiaddrs loop inspired by
@@ -115,6 +117,19 @@ std::vector<interface_info_t> get_interfaces(pthread_mutex_t *cout_mutex) {
     exit(EXIT_FAILURE);
   }
 
+  uint16_t int_count = 0;
+
+  for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr == NULL) {
+      continue;
+    }
+    int_count++;
+  }
+
+  interface_info_t *interfaces =
+      (interface_info_t *)malloc(int_count * sizeof(*interfaces));
+
+  uint16_t i = 0;
   for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
     if (ifa->ifa_addr == NULL) {
       continue;
@@ -127,7 +142,7 @@ std::vector<interface_info_t> get_interfaces(pthread_mutex_t *cout_mutex) {
       }
 
       interface_info_t info;
-      info.name = ifa->ifa_name;
+      strcpy(info.name, ifa->ifa_name);
 
       char ip[INET_ADDRSTRLEN];
       void *addr_ptr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
@@ -162,35 +177,36 @@ std::vector<interface_info_t> get_interfaces(pthread_mutex_t *cout_mutex) {
         info.subnet = get_subnet_from_str(subnet);
       }
 
-      interfaces.push_back(info);
+      interfaces[i] = info;
       pthread_mutex_lock(cout_mutex);
       std::cout << "Found interface: " << info.name << std::endl;
       pthread_mutex_unlock(cout_mutex);
+      i++;
     }
   }
 
   freeifaddrs(ifaddr);
-  return interfaces;
+  return {interfaces, int_count};
 }
 
-std::vector<ip_addr_t>
-get_local_ips(std::vector<interface_info_t> &interfaces) {
-  std::vector<ip_addr_t> local_ips;
-  local_ips.reserve(interfaces.size());
+local_ip_list_t get_local_ips(interface_list_t interfaces) {
+  ip_addr_t *local_ips =
+      (ip_addr_t *)malloc(interfaces.count * sizeof(*local_ips));
 
-  for (auto &iface : interfaces) {
-    local_ips.push_back(iface.addr);
+  for (uint16_t i = 0; i < interfaces.count; i++) {
+    local_ips[i] = (interfaces.interfaces[i].addr);
   }
 
-  return local_ips;
+  return {local_ips, interfaces.count};
 }
 
-std::vector<router_socket_t>
-bind_sockets(std::vector<interface_info_t> &interfaces,
-             pthread_mutex_t *cout_mutex) {
-  std::vector<router_socket_t> sockets;
+socket_list_t bind_sockets(interface_list_t interfaces,
+                           pthread_mutex_t *cout_mutex) {
+  router_socket_t *sockets =
+      (router_socket_t *)malloc(interfaces.count * sizeof(*sockets));
 
-  for (auto &iface : interfaces) {
+  for (uint16_t i = 0; i < interfaces.count; i++) {
+    interface_info_t iface = interfaces.interfaces[i];
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
       pthread_mutex_lock(cout_mutex);
@@ -203,8 +219,7 @@ bind_sockets(std::vector<interface_info_t> &interfaces,
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable_reuse,
                sizeof(enable_reuse));
 
-    if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, iface.name.c_str(),
-                   iface.name.length()) < 0) {
+    if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, iface.name, 16) < 0) {
       pthread_mutex_lock(cout_mutex);
       std::cout << "ERROR: cannot bind to device" << std::endl;
       pthread_mutex_unlock(cout_mutex);
@@ -229,13 +244,14 @@ bind_sockets(std::vector<interface_info_t> &interfaces,
       continue;
     }
 
-    sockets.push_back((router_socket_t){iface.name, sock});
+    sockets[i] = (router_socket_t){"", sock};
+    strcpy(sockets[i].name, iface.name);
     pthread_mutex_lock(cout_mutex);
     std::cout << "Bound socket " << sock << " to " << iface.name << std::endl;
     pthread_mutex_unlock(cout_mutex);
   }
 
-  return sockets;
+  return {sockets, interfaces.count};
 }
 
 void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex) {

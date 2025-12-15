@@ -2,6 +2,7 @@
 #define ROUTER_H_INCLUDED
 
 #include <arpa/inet.h>
+#include <cstdint>
 #include <cstring>
 #include <ifaddrs.h>
 #include <iostream>
@@ -54,16 +55,31 @@ typedef struct msg_queue_t {
 } msg_queue_t;
 
 typedef struct interface_info_t {
-  std::string name;
+  char name[16];
   ip_addr_t addr;
   ip_addr_t broadcast_addr;
   ip_subnet_t subnet;
 } interface_info_t;
 
+typedef struct interface_list_t {
+  interface_info_t *interfaces;
+  uint16_t count;
+} interface_list_t;
+
 typedef struct router_socket_t {
-  std::string name;
+  char name[16];
   int fd;
 } router_socket_t;
+
+typedef struct socket_list_t {
+  router_socket_t *sockets;
+  uint16_t count;
+} socket_list_t;
+
+typedef struct local_ip_list_t {
+  ip_addr_t *ips;
+  uint16_t count;
+} local_ip_list_t;
 
 typedef struct hello_entry_t {
   hello_entry_t *next;
@@ -84,13 +100,12 @@ typedef struct hello_table_t {
 
 void *router_main(void *arg);
 
-std::vector<interface_info_t> get_interfaces(pthread_mutex_t *cout_mutex);
+interface_list_t get_interfaces(pthread_mutex_t *cout_mutex);
 
-std::vector<ip_addr_t> get_local_ips(std::vector<interface_info_t> &interfaces);
+local_ip_list_t get_local_ips(interface_list_t interfaces);
 
-std::vector<router_socket_t>
-bind_sockets(std::vector<interface_info_t> &interfaces,
-             pthread_mutex_t *cout_mutex);
+socket_list_t bind_sockets(interface_list_t interfaces,
+                           pthread_mutex_t *cout_mutex);
 
 void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex);
 

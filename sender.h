@@ -4,12 +4,12 @@
 #include <thread>
 #include <vector>
 
-#include "router.h"
 #include "network.h"
+#include "router.h"
 
 typedef struct sender_data_t {
-  std::vector<interface_info_t> &interfaces;
-  std::vector<router_socket_t> &sockets;
+  interface_list_t interfaces;
+  socket_list_t sockets;
   hello_table_t *hello_table;
   dv_table_t *routing_table;
   pthread_mutex_t *cout_mutex;

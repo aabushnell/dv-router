@@ -35,18 +35,18 @@ void *sender_main(void *arg) {
     print_hello_table(data->hello_table, data->cout_mutex);
 
     // Send HELLOs
-    for (size_t i = 0; i < data->sockets.size(); i++) {
+    for (size_t i = 0; i < data->sockets.count; i++) {
       struct sockaddr_in dest_addr;
       memset(&dest_addr, 0, sizeof(dest_addr));
       dest_addr.sin_family = AF_INET;
       dest_addr.sin_port = htons(PROTOCOL_PORT);
 
       char *broadcast_addr =
-          get_str_from_addr(data->interfaces[i].broadcast_addr);
+          get_str_from_addr(data->interfaces.interfaces[i].broadcast_addr);
       inet_pton(AF_INET, broadcast_addr, &dest_addr.sin_addr);
       free(broadcast_addr);
 
-      char *local_ip = get_str_from_addr(data->interfaces[i].addr);
+      char *local_ip = get_str_from_addr(data->interfaces.interfaces[i].addr);
       std::string message = std::string(local_ip);
       message += ":HELLO:";
 
@@ -56,11 +56,11 @@ void *sender_main(void *arg) {
                      sizeof(sn_net_order));
 
       ssize_t bytes_sent =
-          sendto(data->sockets[i].fd, message.data(), message.size(), 0,
+          sendto(data->sockets.sockets[i].fd, message.data(), message.size(), 0,
                  (struct sockaddr *)&dest_addr, sizeof(dest_addr));
 
       pthread_mutex_lock(data->cout_mutex);
-      std::cout << "Sent HELLO on " << data->interfaces[i].name
+      std::cout << "Sent HELLO on " << data->interfaces.interfaces[i].name
                 << " (SN: " << sn << ", Bytes: " << bytes_sent << ")"
                 << std::endl;
       pthread_mutex_unlock(data->cout_mutex);
@@ -70,25 +70,25 @@ void *sender_main(void *arg) {
     char *dv_msg;
     pthread_mutex_lock(data->routing_table->table_mutex);
     if (data->routing_table->update_dv || dv_counter > 4) {
-      for (size_t i = 0; i < data->sockets.size(); i++) {
+      for (size_t i = 0; i < data->sockets.count; i++) {
         struct sockaddr_in dest_addr;
         memset(&dest_addr, 0, sizeof(dest_addr));
         dest_addr.sin_family = AF_INET;
         dest_addr.sin_port = htons(PROTOCOL_PORT);
 
         char *broadcast_addr =
-            get_str_from_addr(data->interfaces[i].broadcast_addr);
+            get_str_from_addr(data->interfaces.interfaces[i].broadcast_addr);
         inet_pton(AF_INET, broadcast_addr, &dest_addr.sin_addr);
         free(broadcast_addr);
 
-        dv_msg =
-            get_distance_vector(data->routing_table, data->interfaces[i].addr);
+        dv_msg = get_distance_vector(data->routing_table,
+                                     data->interfaces.interfaces[i].addr);
 
         ssize_t bytes_sent =
-            sendto(data->sockets[i].fd, dv_msg, strlen(dv_msg), 0,
+            sendto(data->sockets.sockets[i].fd, dv_msg, strlen(dv_msg), 0,
                    (struct sockaddr *)&dest_addr, sizeof(dest_addr));
         pthread_mutex_lock(data->cout_mutex);
-        std::cout << "Sent DV Update on " << data->interfaces[i].name
+        std::cout << "Sent DV Update on " << data->interfaces.interfaces[i].name
                   << " (Bytes: " << bytes_sent << ")" << std::endl;
         pthread_mutex_unlock(data->cout_mutex);
       }
