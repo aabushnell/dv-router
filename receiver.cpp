@@ -19,7 +19,8 @@ void *receiver_main(void *arg) {
 
   while (true) {
     FD_ZERO(&readfds);
-    for (auto &s : data->sockets) {
+    for (int i = 0; i < data->sock_count; i++) {
+      router_socket_t s = data->sockets[i];
       FD_SET(s.fd, &readfds);
       if (s.fd > max_fd) {
         max_fd = s.fd;
@@ -32,7 +33,8 @@ void *receiver_main(void *arg) {
     int pending_sockets = select(max_fd + 1, &readfds, NULL, NULL, NULL);
 
     if (pending_sockets > 0) {
-      for (auto &s : data->sockets) {
+      for (int i = 0; i < data->sock_count; i++) {
+        router_socket_t s = data->sockets[i];
         if (FD_ISSET(s.fd, &readfds)) {
           int n = recvfrom(s.fd, buffer, REC_BUFF_SIZE - 1, 0,
                            (struct sockaddr *)&sender_addr, &addr_len);
@@ -45,8 +47,8 @@ void *receiver_main(void *arg) {
 
             bool is_local = false;
 
-            for (auto &local_ip : data->local_ips) {
-              if (addr_cmpr(sender_ip, local_ip)) {
+            for (int j = 0; j < data->local_ip_count; j++) {
+              if (addr_cmpr(sender_ip, data->local_ips[j])) {
                 is_local = true;
                 break;
               }
@@ -66,7 +68,9 @@ void *receiver_main(void *arg) {
             new_node->msg_str = (char *)malloc(n + 1);
             memcpy(new_node->msg_str, buffer, n);
             new_node->msg_str[n] = '\0';
-            memcpy(new_node->int_name, s.name.c_str(), 16);
+
+            strncpy(new_node->int_name, data->sockets[i].int_name, 15);
+            new_node->int_name[15] = '\0';
             new_node->next = NULL;
 
             pthread_mutex_lock(data->msg_queue->queue_mutex);
@@ -83,9 +87,9 @@ void *receiver_main(void *arg) {
             pthread_cond_signal(data->msg_queue->queue_cond);
 
             pthread_mutex_lock(data->cout_mutex);
-            std::cout << "Received update from " << sender << " on " << s.name
-                      << std::endl;
-            std::cout << "  : " << buffer << std::endl;
+            printf("Received update from %s on %s\n", sender,
+                   data->sockets[i].int_name);
+            printf("  : %s\n", buffer);
             pthread_mutex_unlock(data->cout_mutex);
           }
         }

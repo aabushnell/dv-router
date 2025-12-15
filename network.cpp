@@ -148,9 +148,6 @@ dv_parsed_msg_t *parse_distance_vector(char *dv_str,
   cursor += 3;
 
   while (*cursor == '(') {
-    pthread_mutex_lock(cout_mutex);
-    // std::cout << "~~Parsing new destination" << std::endl;
-    pthread_mutex_unlock(cout_mutex);
     cursor++;
     char *close_paren = strchr(cursor, ')');
     char *comma = strchr(cursor, ',');
@@ -228,7 +225,7 @@ void add_direct_route(dv_table_t *table, ip_subnet_t subnet, uint32_t cost,
 
     pthread_mutex_lock(cout_mutex);
     char *subnet_str = get_str_from_subnet(subnet);
-    std::cout << "Adding new dest: " << subnet_str << std::endl;
+    printf("Adding new dest: %s\n", subnet_str);
     pthread_mutex_unlock(cout_mutex);
   }
 
@@ -268,34 +265,32 @@ void print_dv_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
     return;
 
   pthread_mutex_lock(cout_mutex);
-  std::cout << "\n=== FORWARDING TABLE ===\n";
-  std::cout << "Dest Subnet\t\tGW\t\tCost\n";
-  std::cout << "------------------------------------------------------------\n";
+  printf("\n=== FORWARDING TABLE ===\n");
+  printf("Dest Subnet\t\tGW\t\tCost\n");
+  printf("------------------------------------------------------------\n");
 
   dv_dest_entry_t *dest = table->head;
   while (dest != NULL) {
     char *subnet_str = get_str_from_subnet(dest->dest);
 
-    std::string gw_str = "None";
-    std::string cost_str = "INF";
+    char gw_display[20] = "None";
+    char cost_display[10] = "INF";
 
     if (dest->best != NULL) {
       char *gw_ip = get_str_from_addr(dest->best->neighbor_addr);
-      gw_str = std::string(gw_ip);
+      snprintf(gw_display, sizeof(gw_display), "%s", gw_ip);
       free(gw_ip);
 
-      cost_str = std::to_string(dest->best_cost);
-    } else if (dest->best_cost >= INFINITY_COST) {
-      cost_str = "INF";
+      snprintf(cost_display, sizeof(cost_display), "%u", dest->best_cost);
     }
 
-    std::cout << subnet_str << "\t\t" << gw_str << "\t\t" << cost_str << "\n";
+    printf("%s\t\t%s\t\t%s\n", subnet_str, gw_display, cost_display);
 
     free(subnet_str);
 
     dest = dest->next;
   }
-  std::cout << "=====================\n\n";
+  printf("=====================\n\n");
   pthread_mutex_unlock(cout_mutex);
 }
 
@@ -305,56 +300,35 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
 
   pthread_mutex_lock(table->table_mutex);
   pthread_mutex_lock(cout_mutex);
-  std::cout << std::endl
-            << "===================== ROUTING TABLE "
-               "==========================="
-            << std::endl;
-  std::cout << "---------------------------------------------------------------"
-            << std::endl;
-  // clang-format off
-  std::cout << std::setw(22) << std::left << "Dest"
-            << std::setw(20) << std::left << "Gateway"
-            << std::setw(8) << std::left << "Cost"
-            << std::setw(8) << std::left << "Best?"
-            << std::endl;
-  // clang-format on
-  std::cout << "---------------------------------------------------------------"
-            << std::endl;
+  printf("\n===================== ROUTING TABLE ===========================\n");
+  printf("---------------------------------------------------------------\n");
+  printf("%-22s%-20s%-8s%-8s\n", "Dest", "Gateway", "Cost", "Best?");
+  printf("---------------------------------------------------------------\n");
 
   dv_dest_entry_t *dest = table->head;
   while (dest != NULL) {
     char *subnet_str = get_str_from_subnet(dest->dest);
 
-    // Print header for this destination (optional)
-    // std::cout << "\n[Destination: " << subnet_str << "]\n";
-
-    // Iterate over ALL neighbors for this destination
     dv_neighbor_entry_t *neigh = dest->head;
 
     if (neigh == NULL) {
       // No routes for this destination
-      std::cout << subnet_str << "\t\t"
-                << "---" << "\t\t"
-                << "---" << "\t"
-                << "---" << "\n";
+      printf("%-22s%-20s%-8s%-8s\n", subnet_str, "---", "---", "---");
     }
 
     while (neigh != NULL) {
       char *gw_ip = get_str_from_addr(neigh->neighbor_addr);
 
-      std::string cost_str =
-          (neigh->cost >= INFINITY_COST) ? "INF" : std::to_string(neigh->cost);
+      char cost_str[16];
+      if (neigh->cost >= INFINITY_COST) {
+        snprintf(cost_str, sizeof(cost_str), "INF");
+      } else {
+        snprintf(cost_str, sizeof(cost_str), "%u", neigh->cost);
+      }
 
-      // Mark if this is the best route
-      std::string best_marker = (dest->best == neigh) ? " *" : "";
+      const char *best_marker = (dest->best == neigh) ? " *" : "";
 
-      // clang-format off
-      std::cout << std::setw(22) << std::left << subnet_str
-                << std::setw(20) << std::left << gw_ip
-                << std::setw(8) << std::left << cost_str
-                << std::setw(8) << std::left << best_marker
-                << std::endl;
-      // clang-format on
+      printf("%-22s%-20s%-8s%-8s\n", subnet_str, gw_ip, cost_str, best_marker);
 
       free(gw_ip);
       neigh = neigh->next;
@@ -363,8 +337,7 @@ void print_routing_table(dv_table_t *table, pthread_mutex_t *cout_mutex) {
     free(subnet_str);
     dest = dest->next;
   }
-  std::cout << "---------------------------------------------------------------"
-            << std::endl;
+  printf("---------------------------------------------------------------\n");
   pthread_mutex_unlock(table->table_mutex);
   pthread_mutex_unlock(cout_mutex);
 }

@@ -24,29 +24,27 @@ void *processor_main(void *arg) {
     msg_type_t type = get_msg_type(msg_entry->msg_str);
 
     if (type == MSG_HELLO) {
-      pthread_mutex_lock(data->cout_mutex);
-      // std::cout << "Processing msg of type MSG_HELLO" << std::endl;
-      pthread_mutex_unlock(data->cout_mutex);
       process_hello(msg_entry->msg_str, msg_entry->int_name, data->hello_table,
                     data->cout_mutex);
+      free(msg_entry->msg_str);
+      free(msg_entry);
       continue;
     }
 
     if (type == MSG_DV) {
-      pthread_mutex_lock(data->cout_mutex);
-      // std::cout << "Processing msg of type MSG_DV: " << msg_entry->msg_str
-      //           << std::endl;
-      pthread_mutex_unlock(data->cout_mutex);
       dv_parsed_msg_t *msg =
           parse_distance_vector(msg_entry->msg_str, data->cout_mutex);
       if (msg) {
         process_distance_vector(msg, data->table, data->cout_mutex);
       } else {
         pthread_mutex_lock(data->cout_mutex);
-        std::cout << "ERROR: Could not parse message" << std::endl;
+        printf("ERROR: Could not parse message\n");
         pthread_mutex_unlock(data->cout_mutex);
       }
       print_routing_table(data->table, data->cout_mutex);
+
+      free(msg_entry->msg_str);
+      free(msg_entry);
       continue;
     }
 
@@ -54,7 +52,7 @@ void *processor_main(void *arg) {
     free(msg_entry);
 
     pthread_mutex_lock(data->cout_mutex);
-    std::cout << "Processing msg of type MSG_UNKNOWN" << std::endl;
+    printf("Processing msg of type MSG_UNKNOWN\n");
     pthread_mutex_unlock(data->cout_mutex);
   }
 }
@@ -269,7 +267,7 @@ void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
   uint16_t sn = ntohs(sn_net);
 
   pthread_mutex_lock(cout_mutex);
-  std::cout << "SN: " << sn << std::endl;
+  printf("SN: %d\n", sn);
   pthread_mutex_unlock(cout_mutex);
 
   pthread_mutex_lock(hello_table->table_mutex);
@@ -296,7 +294,9 @@ void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
     new_entry->last_sn = sn;
     new_entry->last_seen = time(NULL);
     new_entry->alive = true;
-    strcpy(new_entry->int_name, int_name);
+
+    strncpy(new_entry->int_name, int_name, 15);
+    new_entry->int_name[15] = '\0';
 
     new_entry->next = hello_table->head;
     hello_table->head = new_entry;
@@ -305,7 +305,7 @@ void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
 
     pthread_mutex_lock(cout_mutex);
     char *sender_ip_str = get_str_from_addr(sender_ip);
-    std::cout << "New Neighbor Found @ " << sender_ip_str << "!" << std::endl;
+    printf("New Neighbor Found @ %s!\n", sender_ip_str);
     free(sender_ip_str);
     pthread_mutex_unlock(cout_mutex);
   }
@@ -323,17 +323,11 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
 
   if (current_route == NULL) {
     pthread_mutex_lock(cout_mutex);
-    std::cout << "ERROR: parsed message malformed" << std::endl;
+    printf("ERROR: parsed message malformed\n");
     pthread_mutex_unlock(cout_mutex);
   }
 
   while (current_route != NULL) {
-    pthread_mutex_lock(cout_mutex);
-    char *crd = get_str_from_subnet(current_route->dest);
-    // std::cout << "~~ Parsing route " << crd << std::endl;
-    free(crd);
-    pthread_mutex_unlock(cout_mutex);
-
     dv_dest_entry_t *current_entry = table->head;
     dv_dest_entry_t *dest = NULL;
 
@@ -379,14 +373,6 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
       dest->head = neighbor;
     }
 
-    pthread_mutex_lock(cout_mutex);
-    char *nba = get_str_from_addr(neighbor->neighbor_addr);
-    // std::cout << "~~ Parsing neighbor " << nba
-    //           << " with current cost: " << neighbor->cost
-    //           << " and new cost: " << current_route->cost + 1 << std::endl;
-    free(nba);
-    pthread_mutex_unlock(cout_mutex);
-
     uint32_t new_cost = current_route->cost + 1;
     if (new_cost > INFINITY_COST) {
       new_cost = INFINITY_COST;
@@ -422,10 +408,13 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
     current_route = current_route->next;
   }
   if (dv_updated) {
+
     pthread_mutex_lock(cout_mutex);
-    std::cout << "DV Updated! installing new routes" << std::endl;
+    printf("DV Updated! installing new routes\n");
     pthread_mutex_unlock(cout_mutex);
+
     sync_kernel_routes(table, cout_mutex);
+
     dv_update(table);
   }
   pthread_mutex_unlock(table->table_mutex);

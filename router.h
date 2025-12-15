@@ -54,14 +54,14 @@ typedef struct msg_queue_t {
 } msg_queue_t;
 
 typedef struct interface_info_t {
-  std::string name;
+  char int_name[16];
   ip_addr_t addr;
   ip_addr_t broadcast_addr;
   ip_subnet_t subnet;
 } interface_info_t;
 
 typedef struct router_socket_t {
-  std::string name;
+  char int_name[16];
   int fd;
 } router_socket_t;
 
@@ -84,13 +84,13 @@ typedef struct hello_table_t {
 
 void *router_main(void *arg);
 
-std::vector<interface_info_t> get_interfaces(pthread_mutex_t *cout_mutex);
+interface_info_t *get_interfaces(pthread_mutex_t *cout_mutex, int *count);
 
-std::vector<ip_addr_t> get_local_ips(std::vector<interface_info_t> &interfaces);
+ip_addr_t *get_local_ips(interface_info_t *interfaces, int count,
+                         int *out_count);
 
-std::vector<router_socket_t>
-bind_sockets(std::vector<interface_info_t> &interfaces,
-             pthread_mutex_t *cout_mutex);
+router_socket_t *bind_sockets(interface_info_t *interfaces, int count,
+                              pthread_mutex_t *cout_mutex, int *out_count);
 
 void print_hello_table(hello_table_t *table, pthread_mutex_t *cout_mutex);
 

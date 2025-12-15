@@ -9,20 +9,23 @@ void *sender_main(void *arg) {
   sender_data_t *data = (sender_data_t *)arg;
   uint16_t sn = 0;
   uint16_t dv_counter = 0;
+
   while (true) {
     // Check for liveness
     bool dying = false;
+
     pthread_mutex_lock(data->hello_table->table_mutex);
     hello_entry_t *current_entry = data->hello_table->head;
+
     while (current_entry != NULL) {
       time_t current_time = time(NULL);
       double age_seconds = difftime(current_time, current_entry->last_seen);
+
       if (age_seconds > 10 && current_entry->alive) {
         current_entry->alive = false;
         dying = true;
         pthread_mutex_lock(data->cout_mutex);
-        std::cout << "Link " << current_entry->int_name << " is dead"
-                  << std::endl;
+        printf("Link %s is dead\n", current_entry->int_name);
         pthread_mutex_unlock(data->cout_mutex);
       }
       current_entry = current_entry->next;
@@ -35,7 +38,7 @@ void *sender_main(void *arg) {
     print_hello_table(data->hello_table, data->cout_mutex);
 
     // Send HELLOs
-    for (size_t i = 0; i < data->sockets.size(); i++) {
+    for (size_t i = 0; i < data->int_count; i++) {
       struct sockaddr_in dest_addr;
       memset(&dest_addr, 0, sizeof(dest_addr));
       dest_addr.sin_family = AF_INET;
@@ -47,30 +50,30 @@ void *sender_main(void *arg) {
       free(broadcast_addr);
 
       char *local_ip = get_str_from_addr(data->interfaces[i].addr);
-      std::string message = std::string(local_ip);
-      message += ":HELLO:";
 
+      size_t ip_len = strlen(local_ip);
+      size_t msg_len = ip_len + 7 + sizeof(uint16_t);
+
+      char *message = (char *)malloc(msg_len);
+      memcpy(message, local_ip, ip_len);
+      memcpy(message + ip_len, ":HELLO:", 7);
       uint16_t sn_net_order = htons(sn);
-
-      message.append(reinterpret_cast<const char *>(&sn_net_order),
-                     sizeof(sn_net_order));
+      memcpy(message + ip_len + 7, &sn_net_order, sizeof(sn_net_order));
 
       ssize_t bytes_sent =
-          sendto(data->sockets[i].fd, message.data(), message.size(), 0,
+          sendto(data->sockets[i].fd, message, msg_len, 0,
                  (struct sockaddr *)&dest_addr, sizeof(dest_addr));
 
       pthread_mutex_lock(data->cout_mutex);
-      std::cout << "Sent HELLO on " << data->interfaces[i].name
-                << " (SN: " << sn << ", Bytes: " << bytes_sent << ")"
-                << std::endl;
+      printf("Sent HELLO on %s (SN: %d, Bytes: %ld)\n",
+             data->interfaces[i].int_name, sn, bytes_sent);
       pthread_mutex_unlock(data->cout_mutex);
     }
 
     // Send DV Updates
-    char *dv_msg;
     pthread_mutex_lock(data->routing_table->table_mutex);
     if (data->routing_table->update_dv || dv_counter > 4) {
-      for (size_t i = 0; i < data->sockets.size(); i++) {
+      for (int i = 0; i < data->int_count; i++) {
         struct sockaddr_in dest_addr;
         memset(&dest_addr, 0, sizeof(dest_addr));
         dest_addr.sin_family = AF_INET;
@@ -81,16 +84,18 @@ void *sender_main(void *arg) {
         inet_pton(AF_INET, broadcast_addr, &dest_addr.sin_addr);
         free(broadcast_addr);
 
-        dv_msg =
+        char *dv_msg =
             get_distance_vector(data->routing_table, data->interfaces[i].addr);
 
         ssize_t bytes_sent =
             sendto(data->sockets[i].fd, dv_msg, strlen(dv_msg), 0,
                    (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+
         pthread_mutex_lock(data->cout_mutex);
-        std::cout << "Sent DV Update on " << data->interfaces[i].name
-                  << " (Bytes: " << bytes_sent << ")" << std::endl;
+        printf("Sent DV Update on %s (Bytes: %ld)\n",
+               data->interfaces[i].int_name, bytes_sent);
         pthread_mutex_unlock(data->cout_mutex);
+        free(dv_msg);
       }
       dv_sent(data->routing_table);
       dv_counter = 0;
@@ -99,6 +104,6 @@ void *sender_main(void *arg) {
 
     sn++;
     dv_counter++;
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    sleep(5);
   }
 }
