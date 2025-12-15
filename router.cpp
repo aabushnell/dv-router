@@ -85,7 +85,7 @@ void *router_main(void *arg) {
   while (true) {
     // Check for changes in immediate topology
     pthread_mutex_lock(hello_table->table_mutex);
-    // bool added = data->hello_table->neighbor_added;
+    bool added = hello_table->neighbor_added;
     bool dead = hello_table->neighbor_dead;
     pthread_mutex_unlock(hello_table->table_mutex);
 
@@ -99,6 +99,19 @@ void *router_main(void *arg) {
 
       pthread_mutex_lock(hello_table->table_mutex);
       hello_table->neighbor_dead = false;
+      pthread_mutex_unlock(hello_table->table_mutex);
+    }
+
+    if (added) {
+      pthread_mutex_lock(data->cout_mutex);
+      printf("Processing topology change\n");
+      pthread_mutex_unlock(data->cout_mutex);
+
+      handle_alive_link(hello_table, routing_table);
+      print_routing_table(routing_table, data->cout_mutex);
+
+      pthread_mutex_lock(hello_table->table_mutex);
+      hello_table->neighbor_added = false;
       pthread_mutex_unlock(hello_table->table_mutex);
     }
 

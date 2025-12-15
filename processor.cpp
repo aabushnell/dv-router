@@ -164,6 +164,57 @@ void handle_dead_link(hello_table_t *hello_table, dv_table_t *routing_table) {
   pthread_mutex_unlock(routing_table->table_mutex);
 }
 
+void handle_alive_link(hello_table_t *hello_table, dv_table_t *routing_table) {
+  bool dv_updated = false;
+
+  pthread_mutex_lock(hello_table->table_mutex);
+  pthread_mutex_lock(routing_table->table_mutex);
+
+  hello_entry_t *curr = hello_table->head;
+  ip_addr_t direct_gw = {0, 0, 0, 0}; // Represents the direct interface link
+
+  while (curr != NULL) {
+    if (curr->alive) {
+      ip_subnet_t subnet;
+      subnet.addr = curr->ip;
+      subnet.addr.f4 = 0;
+      subnet.prefix_len = 24;
+
+      dv_dest_entry_t *dest = routing_table->head;
+      while (dest != NULL) {
+        if (subnet_cmpr(dest->dest, subnet)) {
+
+          dv_neighbor_entry_t *route = dest->head;
+          while (route != NULL) {
+            if (addr_cmpr(route->neighbor_addr, direct_gw)) {
+
+              if (route->cost > 1) {
+                route->cost = 1;
+                dv_updated = true;
+
+                if (route->cost < dest->best_cost) {
+                  dest->best_cost = route->cost;
+                  dest->best = route;
+                }
+              }
+            }
+            route = route->next;
+          }
+        }
+        dest = dest->next;
+      }
+    }
+    curr = curr->next;
+  }
+
+  if (dv_updated) {
+    dv_update(routing_table);
+  }
+
+  pthread_mutex_unlock(routing_table->table_mutex);
+  pthread_mutex_unlock(hello_table->table_mutex);
+}
+
 void process_topology_change(hello_table_t *hello_table,
                              dv_table_t *routing_table) {
   bool dv_updated = false;
@@ -281,7 +332,10 @@ void process_hello(char *msg, char *int_name, hello_table_t *hello_table,
       if (current_entry->last_sn < sn) {
         current_entry->last_sn = sn;
         current_entry->last_seen = time(NULL);
-        current_entry->alive = true;
+        if (!current_entry->alive) {
+          current_entry->alive = true;
+          hello_table->neighbor_added = true;
+        }
       }
       break;
     }

@@ -24,6 +24,8 @@ void process_distance_vector(dv_parsed_msg_t *msg, dv_table_t *table,
 
 void handle_dead_link(hello_table_t *hello_table, dv_table_t *routing_table);
 
+void handle_alive_link(hello_table_t *hello_table, dv_table_t *routing_table);
+
 void *processor_main(void *arg);
 
 #endif
