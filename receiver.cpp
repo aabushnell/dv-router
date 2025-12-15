@@ -1,10 +1,10 @@
 #include <cstdint>
 #include <netinet/in.h>
-#include <network.h>
 #include <sys/socket.h>
 
 #include "receiver.h"
 #include "router.h"
+#include "network.h"
 
 void *receiver_main(void *arg) {
   receiver_data_t *data = (receiver_data_t *)arg;
