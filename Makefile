@@ -1,5 +1,5 @@
-CXX = g++
-CXXFLAGS = -g -Wall -pthread
+CC = gcc
+CFLAGS = -g -Wall -pthread
 
 MKDIR = mkdir -p
 
@@ -18,10 +18,10 @@ REBUILDABLES = $(OBJS) $(LINK_TARGET)
 all: $(LINK_TARGET)
 
 $(LINK_TARGET): $(OBJS) | bin
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^
 
-obj/%.o: %.cpp | obj
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+obj/%.o: %.c | obj
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 obj:
 	$(MKDIR) $@
@@ -54,14 +54,14 @@ run_bin_%:
 	
 # dependency rules
 
-obj/main.o: obj/router.o router.h
+obj/main.o: main.c router.h
 
-router.cpp: router.h
+obj/router.o: router.c router.h sender.h receiver.h processor.h network.h
 
-obj/router.o: obj/sender.o obj/receiver.o obj/processor.o
+obj/sender.o: sender.c sender.h router.h
 
-sender.cpp: sender.h
+obj/receiver.o: receiver.c receiver.h router.h
 
-receiver.cpp: receiver.h
+obj/processor.o: processor.c processor.h router.h network.h
 
-processor.cpp: processor.h
+obj/network.o: network.c network.h
